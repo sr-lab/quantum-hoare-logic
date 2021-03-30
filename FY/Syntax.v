@@ -79,16 +79,34 @@ Fixpoint beval (st : state) (b : bool_exp) : bool :=
 Inductive com : Type :=
   | CSkip
   | CAss (x : string) (a : arith_exp)
+  | CAssDist (x : string) (a : arith_exp)
+  | CMeas (x : string) (a : arith_exp)
+  | CInit (q : string)
+  | CApp (q : string) (U : arith_exp)
   | CSeq (c1 c2 : com)
   | CIf (b : bool_exp) (c1 c2 : com)
   | CWhile (b : bool_exp) (c : com).
 
 Notation "'skip'" :=
     CSkip (in custom com at level 0) : com_scope.
+Notation "x :=$ g" :=
+    (CAssDist x g)
+       (in custom com at level 0, x constr at level 0,
+        g at level 87, no associativity) : com_scope.
 Notation "x := y" :=
     (CAss x y)
        (in custom com at level 0, x constr at level 0,
         y at level 85, no associativity) : com_scope.
+Notation "x :=meas M[ q ]" :=
+    (CMeas x q)
+       (in custom com at level 0, x constr at level 0,
+        q at level 77, no associativity) : com_scope.
+Notation "q := 0" :=
+    (CInit q)
+       (in custom com at level 0, q constr at level 0, no associativity) : com_scope.
+Notation "q *= U" :=
+    (CApp q U)
+       (in custom com at level 0, q constr at level 0, no associativity) : com_scope.
 Notation "x ; y" :=
     (CSeq x y)
       (in custom com at level 90, right associativity) : com_scope.
@@ -113,63 +131,4 @@ Definition fact_in_coq : com :=
        Z := Z - 1
      end }>.
 Print fact_in_coq.
-
-Reserved Notation
-         "st '=[' c ']=>' st'"
-         (at level 40, c custom com at level 99,
-          st constr, st' constr at next level).
-Inductive ceval : com -> state -> state -> Prop :=
-  | E_Skip : forall  st,
-      st =[ skip ]=> st
-  | E_Ass : forall  st a n x,
-      aeval st a = n ->
-      st =[ x := a ]=> (x !-> n ; st)
-  | E_Seq : forall  c1 c2 st st' st'',
-      st =[ c1 ]=> st' ->
-      st' =[ c2 ]=> st'' ->
-      st =[ c1 ; c2 ]=> st''
-  | E_IfTrue : forall  st st' b c1 c2,
-      beval st b = true ->
-      st =[ c1 ]=> st' ->
-      st =[ if b then c1 else c2 end]=> st'
-  | E_IfFalse : forall  st st' b c1 c2,
-      beval st b = false ->
-      st =[ c2 ]=> st' ->
-      st =[ if b then c1 else c2 end]=> st'
-  | E_WhileFalse : forall  b st c,
-      beval st b = false ->
-      st =[ while b do c end ]=> st
-  | E_WhileTrue : forall  st st' st'' b c,
-      beval st b = true ->
-      st =[ c ]=> st' ->
-      st' =[ while b do c end ]=> st'' ->
-      st =[ while b do c end ]=> st''
-
-  where "st =[ c ]=> st'" := (ceval c st st').
-
-Example ceval_example1:
-  empty_st =[
-     X := 2;
-     if (X <= 1)
-       then Y := 3
-       else Z := 4
-     end
-  ]=> (Z !-> 4 ; X !-> 2).
-Proof.
-  (* We must supply the intermediate state *)
-  apply E_Seq with (X !-> 2).
-  - (* assignment command *)
-    apply E_Ass. reflexivity.
-  - (* if command *)
-    apply E_IfFalse.
-    reflexivity.
-    apply E_Ass. reflexivity.
-Qed.
-
-
-
-
-
-
-
 
