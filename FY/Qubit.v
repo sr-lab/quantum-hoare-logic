@@ -162,3 +162,22 @@ Proof.
 Qed.
 
 Hint Unfold H X Y Z qubit0 qubit1 q_plus q_minus : U_db.
+
+Notation QState n := (Vector (2^n)).
+
+Definition qubit (x : nat) : Qubit := if x =? 0 then ∣0⟩ else ∣1⟩.
+Arguments qubit x _ _ /.
+
+Notation "'∣' x '⟩'" := (qubit x).
+Notation "∣ x , y , .. , z ⟩" := (kron .. (kron ∣x⟩ ∣y⟩) .. ∣z⟩) (at level 0).
+
+Definition CNOT : Unitary 4 := l2M [[1;0;0;0];
+                                    [0;1;0;0];
+                                    [0;0;0;1];
+                                    [0;0;1;0]].
+    
+Lemma CNOT00 : CNOT × ∣0,0⟩ == ∣0,0⟩. Proof. lma. Qed.
+Lemma CNOT01 : CNOT × ∣0,1⟩ == ∣0,1⟩. Proof. lma. Qed.
+Lemma CNOT10 : CNOT × ∣1,0⟩ == ∣1,1⟩. Proof. lma. Qed.
+Lemma CNOT11 : CNOT × ∣1,1⟩ == ∣1,0⟩. Proof. lma. Qed.
+

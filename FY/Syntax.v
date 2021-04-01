@@ -25,8 +25,6 @@ Inductive bool_exp : Type :=
   | BNot (b : bool_exp)
   | BAnd (b1 b2 : bool_exp).
 
-Definition state := total_map nat.
-
 Coercion AId : string >-> arith_exp.
 Coercion ANum : nat >-> arith_exp.
 
@@ -52,29 +50,6 @@ Notation "x = y" := (BEq x y) (in custom com at level 70, no associativity).
 Notation "x && y" := (BAnd x y) (in custom com at level 80, left associativity).
 Notation "'~' b" := (BNot b) (in custom com at level 75, right associativity).
 Open Scope com_scope.
-
-Definition empty_st := (_ !-> 0).
-Notation "x '!->' v" := (t_update empty_st x v) (at level 100).
-
-Fixpoint aeval (st : state) (a : arith_exp) : nat :=
-  match a with
-  | ANum n => n
-  | AId x => st x
-  | <{a1 + a2}> => (aeval st a1) + (aeval st a2)
-  | <{a1 - a2}> => (aeval st a1) - (aeval st a2)
-  | <{a1 * a2}> => (aeval st a1) * (aeval st a2)
-  | <{a1 / a2}> => (aeval st a1) / (aeval st a2)
-  end.
-
-Fixpoint beval (st : state) (b : bool_exp) : bool :=
-  match b with
-  | <{true}> => true
-  | <{false}> => false
-  | <{a1 = a2}> => (aeval st a1) =? (aeval st a2)
-  | <{a1 <= a2}> => (aeval st a1) <=? (aeval st a2)
-  | <{~ b1}> => negb (beval st b1)
-  | <{b1 && b2}> => andb (beval st b1) (beval st b2)
-  end.
 
 Inductive com : Type :=
   | CSkip
@@ -117,18 +92,4 @@ Notation "'if' x 'then' y 'else' z 'end'" :=
 Notation "'while' x 'do' y 'end'" :=
     (CWhile x y)
        (in custom com at level 89, x at level 99, y at level 99) : com_scope.
-
-Definition W : string := "W".
-Definition X : string := "X".
-Definition Y : string := "Y".
-Definition Z : string := "Z".
-
-Definition fact_in_coq : com :=
-  <{ Z := X;
-     Y := 1;
-     while ~(Z = 0) do
-       Y := Y * Z;
-       Z := Z - 1
-     end }>.
-Print fact_in_coq.
 

@@ -1,5 +1,33 @@
 From FY Require Export Map.
 From FY Require Export Syntax.
+From Coq Require Import Bool.Bool.
+From Coq Require Import Init.Nat.
+From Coq Require Import Arith.Arith.
+From Coq Require Import Arith.EqNat.
+
+Definition state := total_map nat.
+Definition empty_st := (_ !-> 0).
+Notation "x '!->' v" := (t_update empty_st x v) (at level 100).
+
+Fixpoint aeval (st : state) (a : arith_exp) : nat :=
+  match a with
+  | ANum n => n
+  | AId x => st x
+  | <{a1 + a2}> => (aeval st a1) + (aeval st a2)
+  | <{a1 - a2}> => (aeval st a1) - (aeval st a2)
+  | <{a1 * a2}> => (aeval st a1) * (aeval st a2)
+  | <{a1 / a2}> => (aeval st a1) / (aeval st a2)
+  end.
+
+Fixpoint beval (st : state) (b : bool_exp) : bool :=
+  match b with
+  | <{true}> => true
+  | <{false}> => false
+  | <{a1 = a2}> => (aeval st a1) =? (aeval st a2)
+  | <{a1 <= a2}> => (aeval st a1) <=? (aeval st a2)
+  | <{~ b1}> => negb (beval st b1)
+  | <{b1 && b2}> => andb (beval st b1) (beval st b2)
+  end.
 
 Reserved Notation
          "st '=[' c ']=>' st'"
@@ -34,27 +62,4 @@ Inductive ceval : com -> state -> state -> Prop :=
 
   where "st =[ c ]=> st'" := (ceval c st st').
 
-Definition W : string := "W".
-Definition X : string := "X".
-Definition Y : string := "Y".
-Definition Z : string := "Z".
-
-Example ceval_example1:
-  empty_st =[
-     X := 2;
-     if (X <= 1)
-       then Y := 3
-       else Z := 4
-     end
-  ]=> (Z !-> 4 ; X !-> 2).
-Proof.
-  (* We must supply the intermediate state *)
-  apply E_Seq with (X !-> 2).
-  - (* assignment command *)
-    apply E_Ass. reflexivity.
-  - (* if command *)
-    apply E_IfFalse.
-    reflexivity.
-    apply E_Ass. reflexivity.
-Qed.
 

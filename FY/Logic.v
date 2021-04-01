@@ -1,6 +1,10 @@
 From FY Require Import Semantics.
 From FY Require Import Map.
 From Coq Require Import Lia.
+From Coq Require Import Strings.String.
+
+Definition X : string := "X".
+Definition Y : string := "Y".
 
 Definition Assertion := state -> Prop.
 
@@ -181,12 +185,10 @@ Lemma eqb_eq': forall (n m: nat), Nat.eqb n m = true <-> n = m.
 Proof.
 Admitted.
 
+
 Example ifexample :
   {{True}}
-  if X = 0
-    then Y := 2
-    else Y := X + 1
-  end
+  if X = 0 then Y := 2 else Y := X + 1 end
   {{X <= Y}}.
 Proof.
   apply hoare_if.
@@ -197,9 +199,3 @@ Proof.
     + apply hoare_asgn.
     + assn_auto'.
 Qed.
-
-
-
-
-
-
