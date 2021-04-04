@@ -181,3 +181,7 @@ Lemma CNOT01 : CNOT × ∣0,1⟩ == ∣0,1⟩. Proof. lma. Qed.
 Lemma CNOT10 : CNOT × ∣1,0⟩ == ∣1,1⟩. Proof. lma. Qed.
 Lemma CNOT11 : CNOT × ∣1,1⟩ == ∣1,0⟩. Proof. lma. Qed.
 
+Definition NOTC : Unitary 4 := l2M [[1; 0; 0; 0];
+                                    [0; 0; 0; 1];
+                                    [0; 0; 1; 0];
+                                    [0; 1; 0; 0]].

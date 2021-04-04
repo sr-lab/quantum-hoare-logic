@@ -9,27 +9,35 @@ Definition W : string := "W".
 Definition X : string := "X".
 Definition Y : string := "Y".
 Definition Z : string := "Z".
+Definition H : string := "H".
+Definition q : string := "q".
+Definition zero : R := 0. 
+Definition one : R := 1. 
+Definition two : R := 2. 
+Definition three : R := 3. 
+Definition four : R := 4. 
+
 
 Definition fact_in_coq : com :=
   <{ Z := X;
-     Y := 1;
-     while ~(Z = 0) do
+     Y := one;
+     while ~(Z = zero) do
        Y := Y * Z;
-       Z := Z - 1
+       Z := Z - one
      end }>.
 Print fact_in_coq.
 
 Example ceval_example1:
   empty_st =[
-     X := 2;
-     if (X <= 1)
-       then Y := 3
-       else Z := 4
+     X := two;
+     if (X <= one)
+       then Y := three
+       else Z := four
      end
-  ]=> (Z !-> 4 ; X !-> 2).
+  ]=> (Z !-> four ; X !-> two).
 Proof.
   (* We must supply the intermediate state *)
-  apply E_Seq with (X !-> 2).
+  apply E_Seq with (X !-> two).
   - (* assignment command *)
     apply E_Ass. reflexivity.
   - (* if command *)
@@ -40,14 +48,20 @@ Qed.
 
 Example ifexample :
   {{True}}
-  if X = 0 then Y := 2 else Y := X + 1 end
+  if X = zero then Y := two else Y := X + one end
   {{X <= Y}}.
 Proof.
   apply hoare_if.
   - eapply hoare_consequence_pre.
     + apply hoare_asgn.
-    + assn_auto'. destruct H. apply eqb_eq' in H0. rewrite H0. lia.
+    + assn_auto'. destruct H0. apply eqb_eq' in H1. rewrite H1. lia.
   - eapply hoare_consequence_pre.
     + apply hoare_asgn.
     + assn_auto'.
 Qed.
+
+Definition BELL : com :=
+  <{ q := zero;
+     q *= H;
+     X :=meas M[ q ] }>.
+Print BELL.

@@ -8,10 +8,12 @@ From Coq Require Import Lists.List.
 From Coq Require Import Strings.String.
 Import ListNotations.
 From FY Require Import Map.
+From FY Require Import Matrix.
+From FY Require Import Real.
 
 Inductive arith_exp : Type :=
   | AId (x : string)
-  | ANum (n : nat)
+  | ANum (n : R)
   | APlus (a1 a2 : arith_exp)
   | AMinus (a1 a2 : arith_exp)
   | AMult (a1 a2 : arith_exp)
@@ -25,8 +27,16 @@ Inductive bool_exp : Type :=
   | BNot (b : bool_exp)
   | BAnd (b1 b2 : bool_exp).
 
+Inductive gate_exp : Type :=
+  | GH (n : nat)
+  | GX (n : nat)
+  | GY (n : nat)
+  | GZ (n : nat)
+  | GI (n : nat)
+  | GCNOT (n1 n2 : nat).
+
 Coercion AId : string >-> arith_exp.
-Coercion ANum : nat >-> arith_exp.
+Coercion ANum : R >-> arith_exp.
 
 Declare Custom Entry com.
 Declare Scope com_scope.
@@ -37,14 +47,14 @@ Notation "f x .. y" := (.. (f x) .. y)
                   (in custom com at level 0, only parsing,
                   f constr at level 0, x constr at level 9,
                   y constr at level 9) : com_scope.
-Notation "x + y" := (APlus x y) (in custom com at level 50, left associativity).
-Notation "x - y" := (AMinus x y) (in custom com at level 50, left associativity).
-Notation "x * y" := (AMult x y) (in custom com at level 40, left associativity).
-Notation "x / y" := (ADiv x y) (in custom com at level 40, left associativity).
 Notation "'true'" := true (at level 1).
 Notation "'true'" := BTrue (in custom com at level 0).
 Notation "'false'" := false (at level 1).
 Notation "'false'" := BFalse (in custom com at level 0).
+Notation "x + y" := (APlus x y) (in custom com at level 50, left associativity).
+Notation "x - y" := (AMinus x y) (in custom com at level 50, left associativity).
+Notation "x * y" := (AMult x y) (in custom com at level 40, left associativity).
+Notation "x / y" := (ADiv x y) (in custom com at level 40, left associativity).
 Notation "x <= y" := (BLe x y) (in custom com at level 70, no associativity).
 Notation "x = y" := (BEq x y) (in custom com at level 70, no associativity).
 Notation "x && y" := (BAnd x y) (in custom com at level 80, left associativity).
@@ -57,7 +67,7 @@ Inductive com : Type :=
   | CAssDist (x : string) (a : arith_exp)
   | CMeas (x : string) (a : arith_exp)
   | CInit (q : string)
-  | CApp (q : string) (U : arith_exp)
+  | CApp (q : string) (U : gate_exp)
   | CSeq (c1 c2 : com)
   | CIf (b : bool_exp) (c1 c2 : com)
   | CWhile (b : bool_exp) (c : com).
@@ -81,7 +91,8 @@ Notation "q := 0" :=
        (in custom com at level 0, q constr at level 0, no associativity) : com_scope.
 Notation "q *= U" :=
     (CApp q U)
-       (in custom com at level 0, q constr at level 0, no associativity) : com_scope.
+       (in custom com at level 0, q constr at level 0, 
+       U at level 85, no associativity) : com_scope.
 Notation "x ; y" :=
     (CSeq x y)
       (in custom com at level 90, right associativity) : com_scope.

@@ -37,11 +37,14 @@ Fixpoint INR (n : nat) : R :=
 
 Coercion INR : nat >-> R.
 
+Check 3 * 5.
+
 Axiom R1_neq_R0 : INR 1 <> INR 0.
 Axiom Rplus_comm : forall r1 r2 : R, r1 + r2 = r2 + r1.
 Axiom Rplus_assoc : forall r1 r2 r3 : R, r1 + r2 + r3 = r1 + (r2 + r3).
 Axiom Rplus_opp_r : forall r : R, r + - r = 0.
 Axiom Rplus_0_l : forall r : R, 0 + r = r.
+
 
 Lemma Rplus_0_r : forall r : R, r + 0 = r.
 Proof.
