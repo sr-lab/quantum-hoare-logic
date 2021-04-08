@@ -7,13 +7,11 @@ From Coq Require Import Arith.Arith.
 From Coq Require Import Arith.EqNat.
 
 
-Definition state := total_map R.
-Definition empty_st := (_ !-> 0%R).
+Definition state := total_map nat.
+Definition empty_st := (_ !-> 0%nat).
 Notation "x '!->' v" := (t_update empty_st x v) (at level 100).
 
-Check ANum.
-
-Fixpoint aeval (st : state) (a : arith_exp) : R :=
+Fixpoint aeval (st : state) (a : arith_exp) : nat :=
   match a with
   | ANum n => n
   | AId x => st x
@@ -23,14 +21,14 @@ Fixpoint aeval (st : state) (a : arith_exp) : R :=
   | <{a1 / a2}> => (aeval st a1) / (aeval st a2)
   end.
 
-Fixpoint beval (st : state) (b : bool_exp) : Prop :=
+Fixpoint beval (st : state) (b : bool_exp) : bool :=
   match b with
-  | <{true}> => True
-  | <{false}> => False
-  | <{a1 = a2}> => (aeval st a1) = (aeval st a2)
-  | <{a1 <= a2}> => (aeval st a1) <= (aeval st a2)
-  | <{~ b1}> => ~ (beval st b1)
-  | <{b1 && b2}> => (beval st b1) /\ (beval st b2)
+  | <{true}> => true
+  | <{false}> => false
+  | <{a1 = a2}> => (aeval st a1) =? (aeval st a2)
+  | <{a1 <= a2}> => (aeval st a1) <=? (aeval st a2)
+  | <{~ b1}> => negb (beval st b1)
+  | <{b1 && b2}> => andb (beval st b1) (beval st b2)
   end.
 
 Definition pad (n to dim : nat) (U : Unitary (2^n)) : Unitary (2^dim) :=
@@ -71,22 +69,22 @@ Inductive ceval : com -> state -> state -> Prop :=
       st' =[ c2 ]=> st'' ->
       st =[ c1 ; c2 ]=> st''
   | E_IfTrue : forall  st st' b c1 c2,
-      beval st b = True ->
+      beval st b = true ->
       st =[ c1 ]=> st' ->
       st =[ if b then c1 else c2 end]=> st'
   | E_IfFalse : forall  st st' b c1 c2,
-      beval st b = False ->
+      beval st b = false ->
       st =[ c2 ]=> st' ->
       st =[ if b then c1 else c2 end]=> st'
   | E_WhileFalse : forall  b st c,
-      beval st b = False ->
+      beval st b = false ->
       st =[ while b do c end ]=> st
   | E_WhileTrue : forall  st st' st'' b c,
-      beval st b = True ->
+      beval st b = true ->
       st =[ c ]=> st' ->
       st' =[ while b do c end ]=> st'' ->
       st =[ while b do c end ]=> st''
 
   where "st =[ c ]=> st'" := (ceval c st st').
 
-
+Definition X : string := "X".

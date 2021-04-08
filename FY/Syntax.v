@@ -8,12 +8,11 @@ From Coq Require Import Lists.List.
 From Coq Require Import Strings.String.
 Import ListNotations.
 From FY Require Import Map.
-From FY Require Import Matrix.
-From FY Require Import Real.
+
 
 Inductive arith_exp : Type :=
   | AId (x : string)
-  | ANum (n : R)
+  | ANum (n : nat)
   | APlus (a1 a2 : arith_exp)
   | AMinus (a1 a2 : arith_exp)
   | AMult (a1 a2 : arith_exp)
@@ -36,7 +35,7 @@ Inductive gate_exp : Type :=
   | GCNOT (n1 n2 : nat).
 
 Coercion AId : string >-> arith_exp.
-Coercion ANum : R >-> arith_exp.
+Coercion ANum : nat >-> arith_exp.
 
 Declare Custom Entry com.
 Declare Scope com_scope.

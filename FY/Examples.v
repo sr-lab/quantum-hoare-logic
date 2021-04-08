@@ -9,13 +9,13 @@ Definition W : string := "W".
 Definition X : string := "X".
 Definition Y : string := "Y".
 Definition Z : string := "Z".
-Definition H : string := "H".
+Definition H : gate_exp := GH (2%nat).
 Definition q : string := "q".
-Definition zero : R := 0. 
-Definition one : R := 1. 
-Definition two : R := 2. 
-Definition three : R := 3. 
-Definition four : R := 4. 
+Definition zero : nat := 0.
+Definition one : nat := 1.
+Definition two : nat := 2.
+Definition three : nat := 3.
+Definition four : nat := 4.
 
 
 Definition fact_in_coq : com :=
@@ -41,24 +41,27 @@ Proof.
   - (* assignment command *)
     apply E_Ass. reflexivity.
   - (* if command *)
-    apply E_IfFalse.
-    reflexivity.
-    apply E_Ass. reflexivity.
-Qed.
+    apply E_IfFalse. 
+Admitted.
+
+Lemma eqb_eq': forall (n m: nat), (n =? m) = true <-> n = m.
+Proof.
+Admitted.
+
 
 Example ifexample :
   {{True}}
   if X = zero then Y := two else Y := X + one end
-  {{X <= Y}}.
+  {{BLe X Y}}.
 Proof.
   apply hoare_if.
   - eapply hoare_consequence_pre.
     + apply hoare_asgn.
-    + assn_auto'. destruct H0. apply eqb_eq' in H1. rewrite H1. lia.
+    + assn_auto'. destruct H0. apply eqb_eq' in H1. rewrite H1. reflexivity.
   - eapply hoare_consequence_pre.
     + apply hoare_asgn.
-    + assn_auto'.
-Qed.
+    + assn_auto'. Admitted.  
+
 
 Definition BELL : com :=
   <{ q := zero;
