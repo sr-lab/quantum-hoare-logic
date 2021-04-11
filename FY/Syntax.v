@@ -102,4 +102,3 @@ Notation "'if' x 'then' y 'else' z 'end'" :=
 Notation "'while' x 'do' y 'end'" :=
     (CWhile x y)
        (in custom com at level 89, x at level 99, y at level 99) : com_scope.
-
