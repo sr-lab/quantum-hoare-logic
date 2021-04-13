@@ -39,6 +39,9 @@ Proof.
   reflexivity. 
 Qed.
 
+Definition WF_Matrix {m n: nat} (A : Matrix m n) : Prop := 
+  forall x y, x >= m \/ y >= n -> A x y = 0%C. 
+
 Lemma mat_equiv_sym : forall {m n} (A B : Matrix m n), A == B -> B == A.
 Proof.
   intros m n A B H i j Hi Hj.

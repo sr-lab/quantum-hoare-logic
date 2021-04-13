@@ -14,8 +14,27 @@ Definition qubit1 : Qubit := l2V [0;1].
 
 Notation "∣ 0 ⟩" := qubit0.
 Notation "∣ 1 ⟩" := qubit1.
+Notation "⟨0∣" := qubit0†.
+Notation "⟨1∣" := qubit1†.
+Notation "∣0⟩⟨0∣" := (∣0⟩×⟨0∣).
+Notation "∣1⟩⟨1∣" := (∣1⟩×⟨1∣).
+Notation "∣1⟩⟨0∣" := (∣1⟩×⟨0∣).
+Notation "∣0⟩⟨1∣" := (∣0⟩×⟨1∣).
 Arguments qubit0 _ _ /.
 Arguments qubit1 _ _ /.
+
+Definition bra (x : nat) : Matrix 1 2 := if x =? 0 then ⟨0∣ else ⟨1∣.
+Definition ket (x : nat) : Matrix 2 1 := if x =? 0 then ∣0⟩ else ∣1⟩.
+
+Notation "'∣' x '⟩'" := (ket x).
+Notation "'⟨' x '∣'" := (bra x).
+
+Notation "∣ x , y , .. , z ⟩" := (kron .. (kron ∣x⟩ ∣y⟩) .. ∣z⟩) (at level 0).
+
+Transparent bra.
+Transparent ket.
+Transparent qubit0.
+Transparent qubit1.
 
 Definition WF_Qubit (ϕ : Qubit) : Prop := (⎸(ϕ 0 0)%nat⎸² + ⎸(ϕ 1 0)%nat⎸² = 1)%C.
 
@@ -58,16 +77,33 @@ Inductive measure : Qubit -> (R * Qubit) -> Prop :=
 
 Notation QState n := (Vector (2^n)).
 
-Definition qubit (x : nat) : Qubit := if x =? 0 then ∣0⟩ else ∣1⟩.
-Arguments qubit x _ _ /.
+Notation Density n := (Matrix n n) (only parsing).
 
-Notation "'∣' x '⟩'" := (qubit x).
-Notation "∣ x , y , .. , z ⟩" := (kron .. (kron ∣x⟩ ∣y⟩) .. ∣z⟩) (at level 0).
+Definition Classical {n} (ρ : Density n) := forall i j, i <> j -> ρ i j = 0.
 
-Definition DensityOperator {n} (qst: QState n) := kron qst (qst †).
+Definition Pure_State_Vector {n} (φ : Vector n): Prop := 
+  WF_Matrix φ /\ φ† × φ = I  1.
 
-Definition qst : QState 2 := ∣0,1⟩.
+Definition Pure_State {n} (ρ : Density n) : Prop := 
+  exists φ, Pure_State_Vector φ /\ ρ = φ × φ†.
 
+Inductive Mixed_State {n} : Matrix n n -> Prop :=
+  | Pure_S : forall ρ, Pure_State ρ -> Mixed_State ρ
+  | Mix_S : forall (p : R) ρ1 ρ2, 0 < p < 1 -> Mixed_State ρ1 -> Mixed_State ρ2 ->
+                                       Mixed_State (p * ρ1 + (1-p)%R * ρ2).
+
+Lemma WF_Pure : forall {n} (ρ : Density n), Pure_State ρ -> WF_Matrix ρ.
+Proof. Admitted. 
+
+Hint Resolve WF_Pure : wf_db.
+
+Lemma WF_Mixed : forall {n} (ρ : Density n), Mixed_State ρ -> WF_Matrix ρ.
+Proof. Admitted. 
+
+Hint Resolve WF_Mixed : wf_db.
+
+Lemma pure0 : Pure_State ∣0⟩⟨0∣. 
+Proof. exists ∣0⟩. intuition. split. auto with wf_db. Abort.
 (* Properties *)
 
 Lemma qubit_decomposition : forall (ϕ : Qubit), exists (α β : C), ϕ == α * ∣0⟩ + β * ∣1⟩.
