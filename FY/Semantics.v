@@ -1,6 +1,6 @@
 From FY Require Export Map.
 From FY Require Export Syntax.
-From FY Require Export Qubit.
+From FY Require Export Quantum.
 From Coq Require Import Bool.Bool.
 From Coq Require Import Init.Nat.
 From Coq Require Import Arith.Arith.
