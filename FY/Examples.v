@@ -44,10 +44,8 @@ Proof.
     apply E_IfFalse. 
 Admitted.
 
-Lemma eqb_eq': forall (n m: nat), (n =? m) = true <-> n = m.
-Proof.
-Admitted.
-
+Require Import Coq.Arith.PeanoNat.
+Check Nat.leb_le.
 
 Example ifexample :
   {{True}}
@@ -55,16 +53,17 @@ Example ifexample :
   {{BLe X Y}}.
 Proof.
   apply hoare_if.
+  Check hoare_if.
   - eapply hoare_consequence_pre.
     + apply hoare_asgn.
-    + assn_auto'. destruct H0. apply eqb_eq' in H1. rewrite H1. reflexivity.
+    + assn_auto'. destruct H0. apply Nat.eqb_eq in H1. rewrite H1. reflexivity.
   - eapply hoare_consequence_pre.
     + apply hoare_asgn.
-    + assn_auto'. Admitted.  
-
+    + assn_auto'. rewrite Nat.leb_le. lia.
+Qed.
 
 Definition BELL : com :=
-  <{ q := zero;
+  <{ q := 0;
      q *= H;
      X :=meas M[ q ] }>.
 Print BELL.

@@ -1,4 +1,5 @@
 From FY Require Export Map.
+From FY Require Import Matrix. 
 From FY Require Export Syntax.
 From FY Require Export Quantum.
 From Coq Require Import Bool.Bool.
@@ -7,28 +8,28 @@ From Coq Require Import Arith.Arith.
 From Coq Require Import Arith.EqNat.
 
 
-Definition state := total_map nat.
-Definition empty_st := (_ !-> 0%nat).
-Notation "x '!->' v" := (t_update empty_st x v) (at level 100).
+Notation cstate := (total_map nat).
 
-Fixpoint aeval (st : state) (a : arith_exp) : nat :=
+Notation qstate n := (Matrix n n).
+
+Fixpoint aeval {n : nat} (cst : cstate) (qst : qstate n) (a : arith_exp) : nat :=
   match a with
-  | ANum n => n
-  | AId x => st x
-  | <{a1 + a2}> => (aeval st a1) + (aeval st a2)
-  | <{a1 - a2}> => (aeval st a1) - (aeval st a2)
-  | <{a1 * a2}> => (aeval st a1) * (aeval st a2)
-  | <{a1 / a2}> => (aeval st a1) / (aeval st a2)
+  | ANum m => m
+  | AId x => cst x
+  | <{a1 + a2}> => (aeval cst qst a1) + (aeval cst qst a2)
+  | <{a1 - a2}> => (aeval cst qst a1) - (aeval cst qst a2)
+  | <{a1 * a2}> => (aeval cst qst a1) * (aeval cst qst a2)
+  | <{a1 / a2}> => (aeval cst qst a1) / (aeval cst qst a2)
   end.
 
-Fixpoint beval (st : state) (b : bool_exp) : bool :=
+Fixpoint beval {n : nat} (cst : cstate) (qst : qstate n) (b : bool_exp) : bool :=
   match b with
   | <{true}> => true
   | <{false}> => false
-  | <{a1 = a2}> => (aeval st a1) =? (aeval st a2)
-  | <{a1 <= a2}> => (aeval st a1) <=? (aeval st a2)
-  | <{~ b1}> => negb (beval st b1)
-  | <{b1 && b2}> => andb (beval st b1) (beval st b2)
+  | <{a1 = a2}> => (aeval cst qst a1) =? (aeval cst qst a2)
+  | <{a1 <= a2}> => (aeval cst qst a1) <=? (aeval cst qst a2)
+  | <{~ b1}> => negb (beval cst qst b1)
+  | <{b1 && b2}> => andb (beval cst qst b1) (beval cst qst b2)
   end.
 
 Definition pad (n to dim : nat) (U : Unitary (2^n)) : Unitary (2^dim) :=
@@ -44,47 +45,49 @@ Definition eval_cnot (dim m n: nat) : Unitary (2^dim) :=
   else
     Zero _ _.
 
-Definition geval {n} (dim : nat) (g : gate_exp) : Unitary (2^dim) :=
+Definition geval (g : gate_exp) : Unitary 2 :=
   match g with
-  | GI j => pad n j dim (I 2)
-  | GH j => pad n j dim H
-  | GX j => pad n j dim X
-  | GZ j => pad n j dim Z
-  | GY j => pad n j dim Y
-  | GCNOT j k => eval_cnot dim j k
+  | GI => I 2
+  | GH => H
+  | GX => X
+  | GZ => Z
+  | GY => Y
   end.
 
-Reserved Notation
-         "st '=[' c ']=>' st'"
-         (at level 40, c custom com at level 99,
-          st constr, st' constr at next level).
-Inductive ceval : com -> state -> state -> Prop :=
-  | E_Skip : forall  st,
-      st =[ skip ]=> st
-  | E_Ass : forall  st a n x,
-      aeval st a = n ->
-      st =[ x := a ]=> (x !-> n ; st)
-  | E_Seq : forall  c1 c2 st st' st'',
-      st =[ c1 ]=> st' ->
-      st' =[ c2 ]=> st'' ->
-      st =[ c1 ; c2 ]=> st''
-  | E_IfTrue : forall  st st' b c1 c2,
-      beval st b = true ->
-      st =[ c1 ]=> st' ->
-      st =[ if b then c1 else c2 end]=> st'
-  | E_IfFalse : forall  st st' b c1 c2,
-      beval st b = false ->
-      st =[ c2 ]=> st' ->
-      st =[ if b then c1 else c2 end]=> st'
-  | E_WhileFalse : forall  b st c,
-      beval st b = false ->
-      st =[ while b do c end ]=> st
-  | E_WhileTrue : forall  st st' st'' b c,
-      beval st b = true ->
-      st =[ c ]=> st' ->
-      st' =[ while b do c end ]=> st'' ->
-      st =[ while b do c end ]=> st''
+Definition qst (n : nat) : qstate n := I n.
 
-  where "st =[ c ]=> st'" := (ceval c st st').
+Definition U (n : nat) : Unitary n := I n.
 
-Definition X : string := "X".
+Definition krn {n} := kron (qst n) (U n).
+
+Inductive ceval (n : nat) : com -> cstate -> qstate n -> cstate -> qstate n -> Prop :=
+  | E_Skip : forall cst qst,
+      ceval n <{ skip }> cst qst cst qst
+  | E_Ass : forall cst qst a m x,
+      aeval cst qst a = m ->
+      ceval n <{ x := a }> cst qst (x !-> m; cst) qst
+  | E_Init : forall q cst (qst : qstate n),
+      ceval n <{ q := 0 }> cst qst cst (kron qst (∣0⟩⟨0∣))
+  | E_App : forall cst qst U q,
+      ceval n <{ q *= U }> cst qst cst ((geval U) × qst × (geval U) †)
+  | E_Seq : forall c1 c2 cst qst cst' qst' cst'' qst'',
+      ceval n c1 cst qst cst' qst' ->
+      ceval n c2 cst' qst' cst'' qst'' ->
+      ceval n <{ c1 ; c2 }> cst qst cst'' qst''
+  | E_IfTrue : forall  cst qst cst' qst' b c1 c2,
+      beval cst qst b = true ->
+      ceval n c1 cst qst cst' qst' ->
+      ceval n <{ if b then c1 else c2 end }> cst qst cst' qst'
+  | E_IfFalse : forall cst qst cst' qst' b c1 c2,
+      beval cst qst b = false ->
+      ceval n c2 cst qst cst' qst' ->
+      ceval n <{ if b then c1 else c2 end }> cst qst cst' qst'
+  | E_WhileFalse : forall cst qst b c,
+      beval cst qst b = false ->
+      ceval n <{ while b do c end }> cst qst cst qst 
+  | E_WhileTrue : forall cst qst cst' qst' cst'' qst'' b c,
+      beval cst qst b = true ->
+      ceval n c cst qst cst' qst' ->
+      ceval n <{ while b do c end }> cst qst cst' qst' ->
+      ceval n <{ while b do c end }> cst' qst' cst'' qst''.
+

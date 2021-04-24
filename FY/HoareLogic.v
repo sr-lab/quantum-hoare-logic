@@ -1,22 +1,27 @@
 From FY Require Import Semantics.
-From FY Require Import Matrix.
+ 
 Require Import List.
 Import ListNotations.
 From FY Require Import Map.
 From FY Require Import Complex.
 From Coq Require Import Lia.
 From Coq Require Import Strings.String.
+From FY Require Export Syntax.
 
-Definition State {n: nat} := total_map nat -> Matrix n n.
+Definition cstate := total_map nat.
 
-Definition Assertion {n: nat} := total_map nat -> Matrix n n.
+Definition qstate (n : nat) := Matrix n n.
 
-Fixpoint Expectation (sts: list (total_map nat)) (d : State)
- (th : Assertion) : C := 
+Definition Assertion (n: nat) := total_map nat -> Matrix n n.
+
+Fixpoint Expectation {n : nat} (sts: list (total_map nat)) (cst : cstate) (qst : qstate n)
+ (th : Assertion n) : C := 
   match sts with
   | nil => 0
-  | st::tail => trace (Mmult (d st) (th st)) + Expectation tail d th 
+  | st::tail => trace (Mmult qst (th cst)) + Expectation tail cst qst th 
   end.
+
+ 
 
 
 

@@ -27,12 +27,11 @@ Inductive bool_exp : Type :=
   | BAnd (b1 b2 : bool_exp).
 
 Inductive gate_exp : Type :=
-  | GH (n : nat)
-  | GX (n : nat)
-  | GY (n : nat)
-  | GZ (n : nat)
-  | GI (n : nat)
-  | GCNOT (n1 n2 : nat).
+  | GH
+  | GX 
+  | GY 
+  | GZ
+  | GI.
 
 Coercion AId : string >-> arith_exp.
 Coercion ANum : nat >-> arith_exp.
