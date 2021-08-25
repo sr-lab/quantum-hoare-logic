@@ -1,29 +1,24 @@
 
 From FY2 Require Export Syntax.
-From FY2 Require Export Utils.
 From Coq Require Import Strings.String.
+From FY2 Require Export Utils.
 
-Definition q : string := "q".
-Definition H : gate_exp := GH.
-Definition Z : gate_exp := GZ.
 Definition X : string := "X".
 
 Definition Prog1 : com :=
-  <{ q :=q 0;
-     q *= H;
-     X :=meas q }>.
+  <{ q 0 :=q 0;
+     q 0 *= GH;
+     X :=measQ 0%nat }>.
 Print Prog1.
 
 Definition Prog2 : com :=
-  <{ q :=q 0;
-     q *= H;
-     X :=meas q;
+  <{ q 0 :=q 0;
+     q 0 *= GH;
+     X :=measQ 0%nat;
      if BEq X 2%nat then
-        q *= Z
+        q 0 *= GZ
     else
         skip
     end }>.
 Print Prog2.
-
-
 

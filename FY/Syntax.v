@@ -33,7 +33,8 @@ Inductive gate_exp : Type :=
   | GX 
   | GY 
   | GZ
-  | GI.
+  | GI
+  | GCNOT.
 
 Coercion ACId : string >-> arith_exp.
 Coercion AQId : string >-> quantum_exp.
@@ -68,9 +69,9 @@ Inductive com : Type :=
   | CSkip
   | CAss (x : string) (a : arith_exp)
   | CAssDist (x : string) (a : arith_exp)
-  | CMeas (x : string) (q : string)
-  | CInit (q : string)
-  | CApp (q : string) (U : gate_exp)
+  | CMeas (x : string) (q : nat)
+  | CInit (q : nat)
+  | CApp (q : nat) (U : gate_exp)
   | CSeq (c1 c2 : com)
   | CIf (b : bool_exp) (c1 c2 : com)
   | CWhile (b : bool_exp) (c : com).
@@ -85,16 +86,16 @@ Notation "x :=c y" :=
     (CAss x y)
        (in custom com at level 0, x constr at level 0,
         y at level 85, no associativity) : com_scope.
-Notation "x :=meas q " :=
-    (CMeas x q)
+Notation "x ':=measQ' n" :=
+    (CMeas x n)
        (in custom com at level 0, x constr at level 0,
-        q at level 77, no associativity) : com_scope.
-Notation "q :=q 0" :=
+        n constr at level 77, no associativity) : com_scope.
+Notation "'q' q :=q 0" :=
     (CInit q)
        (in custom com at level 0, q constr at level 0, no associativity) : com_scope.
-Notation "q *= U" :=
-    (CApp q U)
-       (in custom com at level 0, q constr at level 0, 
+Notation "'q' n *= U" :=
+    (CApp n U)
+       (in custom com at level 0, n constr at level 0, 
        U at level 85, no associativity) : com_scope.
 Notation "x ; y" :=
     (CSeq x y)
