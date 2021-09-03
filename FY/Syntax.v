@@ -7,7 +7,7 @@ From Coq Require Import Lia.
 From Coq Require Import Lists.List.
 From Coq Require Import Strings.String.
 Import ListNotations.
-From FY2 Require Import Utils.
+From FY Require Import Utils.
 
 Inductive arith_exp : Type :=
   | ACId (x : string)

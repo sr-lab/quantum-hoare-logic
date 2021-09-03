@@ -4,8 +4,8 @@ From Coq Require Import Arith.Arith.
 From Coq Require Import Arith.EqNat.
 From Coq Require Import Lists.List.
 From Coq Require Import Strings.String.
-From FY2 Require Export Utils.
-From FY2 Require Export Syntax.
+From FY Require Export Utils.
+From FY Require Export Syntax.
 
 Fixpoint aeval (st : total_map nat)
         (a : arith_exp) : nat :=
