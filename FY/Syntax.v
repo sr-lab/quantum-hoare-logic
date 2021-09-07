@@ -44,9 +44,7 @@ Declare Custom Entry com.
 Declare Scope com_scope.
 Notation "<{ e }>" := e (at level 0, e custom com at level 99) : com_scope.
 Notation "( x )" := x (in custom com, x at level 99) : com_scope.
-Notation "> x , .. , y" := (cons x .. (cons y nil) ..) (at level 0) : com_scope.
 Notation "x" := x (in custom com at level 0, x constr at level 0) : com_scope.
-(*Notation "ls [ n ]" := nth n ls (in custom com at level 0) : com_scope.*)
 Notation "f x .. y" := (.. (f x) .. y)
                   (in custom com at level 0, only parsing,
                   f constr at level 0, x constr at level 9,
@@ -60,7 +58,7 @@ Notation "x + y" := (APlus x y) (in custom com at level 50, left associativity).
 Notation "x * y" := (AMult x y) (in custom com at level 40, left associativity).
 Notation "x / y" := (ADiv x y) (in custom com at level 40, left associativity).
 Notation "x <= y" := (BLe x y) (in custom com at level 70, no associativity).
-Notation "x = y" := (BEq x y) (in custom com at level 70, no associativity).
+Notation "x == y" := (BEq x y) (in custom com at level 70, no associativity).
 Notation "x && y" := (BAnd x y) (in custom com at level 80, left associativity).
 Notation "'~' b" := (BNot b) (in custom com at level 75, right associativity).
 Open Scope com_scope.
@@ -68,7 +66,6 @@ Open Scope com_scope.
 Inductive com : Type :=
   | CSkip
   | CAss (x : string) (a : arith_exp)
-  | CAssDist (x : string) (a : arith_exp)
   | CMeas (x : string) (q : nat)
   | CInit (q : nat)
   | CApp (q : nat) (U : gate_exp)
@@ -78,19 +75,15 @@ Inductive com : Type :=
 
 Notation "'skip'" :=
     CSkip (in custom com at level 0) : com_scope.
-Notation "x :=$ g" :=
-    (CAssDist x g)
-       (in custom com at level 0, x constr at level 0,
-        g at level 87, no associativity) : com_scope.
-Notation "x :=c y" :=
+Notation "x ':=c' y" :=
     (CAss x y)
        (in custom com at level 0, x constr at level 0,
-        y at level 85, no associativity) : com_scope.
+        y at level 76, no associativity) : com_scope.
 Notation "x ':=measQ' n" :=
     (CMeas x n)
        (in custom com at level 0, x constr at level 0,
         n constr at level 77, no associativity) : com_scope.
-Notation "'q' q :=q 0" :=
+Notation "'q' q := 0" :=
     (CInit q)
        (in custom com at level 0, q constr at level 0, no associativity) : com_scope.
 Notation "'q' n *= U" :=

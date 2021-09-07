@@ -7,6 +7,14 @@ From Coq Require Import Strings.String.
 From FY Require Export Utils.
 From FY Require Export Syntax.
 
+(*
+(x -> 0, y -> 1) -> I 2 
+(x -> 1, y -> -1) -> I 2 .H . 
+
+
+
+*)
+
 Fixpoint aeval (st : total_map nat)
         (a : arith_exp) : nat :=
   match a with
@@ -22,7 +30,7 @@ Fixpoint beval (st : total_map nat) (b : bool_exp) : bool :=
   match b with
   | <{true}> => true
   | <{false}> => false
-  | <{a1 = a2}> => (aeval st a1) =? (aeval st a2)
+  | <{a1 == a2}> => (aeval st a1) =? (aeval st a2)
   | <{a1 <= a2}> => (aeval st a1) <=? (aeval st a2)
   | <{~ b1}> => negb (beval st b1)
   | <{b1 && b2}> => andb (beval st b1) (beval st b2)
