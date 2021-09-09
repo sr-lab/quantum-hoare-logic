@@ -7,19 +7,11 @@ From Coq Require Import Strings.String.
 From FY Require Export Utils.
 From FY Require Export Syntax.
 
-(*
-(x -> 0, y -> 1) -> I 2 
-(x -> 1, y -> -1) -> I 2 .H . 
-
-
-
-*)
-
 Fixpoint aeval (st : total_map nat)
         (a : arith_exp) : nat :=
   match a with
   | ANum m => m
-  | ACId x => st x
+  | AId x => st x
   | <{a1 + a2}> => (aeval st a1) + (aeval st a2)
   | <{a1 - a2}> => (aeval st a1) - (aeval st a2)
   | <{a1 * a2}> => (aeval st a1) * (aeval st a2)

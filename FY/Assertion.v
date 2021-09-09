@@ -3,9 +3,8 @@ From Coq Require Import Strings.String.
 From FY Require Export Utils.
 Import ListNotations.
 
-Definition Assertion (n: nat) := pair Prop (Unitary n).
+Definition Assertion (n: nat) := (total_map nat) -> Prop * (Unitary n).
 
-(*  *)
 Fixpoint Expectation (ns na : nat) 
      (state: list ((total_map nat) * (Unitary ns))) 
      (assertion: Assertion na) : C :=
@@ -21,11 +20,5 @@ Fixpoint Expectation (ns na : nat)
     end
 .
 
-
-
-
-
-
 Definition weaker (ns na1 na2 : nat) (state: list ((total_map nat)*(Unitary ns))) (assertion1: Assertion na1) (assertion2: Assertion na2) : Prop :=
     Cnorm (Expectation ns na1 state assertion1) <= Cnorm (Expectation ns na2 state assertion2).
-

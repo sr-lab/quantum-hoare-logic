@@ -10,15 +10,12 @@ Import ListNotations.
 From FY Require Import Utils.
 
 Inductive arith_exp : Type :=
-  | ACId (x : string)
+  | AId (x : string)
   | ANum (n : nat)
   | APlus (a1 a2 : arith_exp)
   | AMinus (a1 a2 : arith_exp)
   | AMult (a1 a2 : arith_exp)
   | ADiv (a1 a2 : arith_exp).
-
-Inductive quantum_exp : Type :=
-  | AQId (x : string).
 
 Inductive bool_exp : Type :=
   | BTrue
@@ -36,8 +33,7 @@ Inductive gate_exp : Type :=
   | GI
   | GCNOT.
 
-Coercion ACId : string >-> arith_exp.
-Coercion AQId : string >-> quantum_exp.
+Coercion AId : string >-> arith_exp.
 Coercion ANum : nat >-> arith_exp.
 
 Declare Custom Entry com.
@@ -45,14 +41,11 @@ Declare Scope com_scope.
 Notation "<{ e }>" := e (at level 0, e custom com at level 99) : com_scope.
 Notation "( x )" := x (in custom com, x at level 99) : com_scope.
 Notation "x" := x (in custom com at level 0, x constr at level 0) : com_scope.
-Notation "f x .. y" := (.. (f x) .. y)
-                  (in custom com at level 0, only parsing,
-                  f constr at level 0, x constr at level 9,
-                  y constr at level 9) : com_scope.
 Notation "'true'" := true (at level 1).
 Notation "'true'" := BTrue (in custom com at level 0).
 Notation "'false'" := false (at level 1).
 Notation "'false'" := BFalse (in custom com at level 0).
+Notation "x % nat" := (x%nat) (in custom com at level 50, left associativity).
 Notation "x - y" := (AMinus x y) (in custom com at level 50, left associativity).
 Notation "x + y" := (APlus x y) (in custom com at level 50, left associativity).
 Notation "x * y" := (AMult x y) (in custom com at level 40, left associativity).
@@ -68,7 +61,8 @@ Inductive com : Type :=
   | CAss (x : string) (a : arith_exp)
   | CMeas (x : string) (q : nat)
   | CInit (q : nat)
-  | CApp (q : nat) (U : gate_exp)
+  | CAppOne (q : nat) (U : gate_exp)
+  | CAppTwo (q1 : nat) (q2 : nat) (U : gate_exp)
   | CSeq (c1 c2 : com)
   | CIf (b : bool_exp) (c1 c2 : com)
   | CWhile (b : bool_exp) (c : com).
@@ -78,7 +72,7 @@ Notation "'skip'" :=
 Notation "x ':=c' y" :=
     (CAss x y)
        (in custom com at level 0, x constr at level 0,
-        y at level 76, no associativity) : com_scope.
+        y at level 40, no associativity) : com_scope.
 Notation "x ':=measQ' n" :=
     (CMeas x n)
        (in custom com at level 0, x constr at level 0,
@@ -87,9 +81,13 @@ Notation "'q' q := 0" :=
     (CInit q)
        (in custom com at level 0, q constr at level 0, no associativity) : com_scope.
 Notation "'q' n *= U" :=
-    (CApp n U)
+    (CAppOne n U)
        (in custom com at level 0, n constr at level 0, 
        U at level 85, no associativity) : com_scope.
+Notation "'q' n m *= U" :=
+    (CAppTwo n m U)
+       (in custom com at level 0, n constr at level 0, 
+       m constr at level 0, U at level 85, no associativity) : com_scope.
 Notation "x ; y" :=
     (CSeq x y)
       (in custom com at level 90, right associativity) : com_scope.

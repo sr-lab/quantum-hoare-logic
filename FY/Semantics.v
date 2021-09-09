@@ -16,8 +16,10 @@ Inductive ceval {nq}: com -> list ((total_map nat)*(Unitary nq)) -> list ((total
       ceval <{ x :=c a }> st (UpdateStateAssign nq st x a)
   | E_Init : forall m st,
       ceval <{ q m := 0 }> st (UpdateStateInit nq st m)
-  | E_App : forall st U m,
+  | E_AppOne : forall st U m,
       ceval <{ q m *= U }> st (UpdateStateApply nq st m U)
+  | E_AppTwo : forall st U n m,
+      ceval <{ q n m *= U }> st (UpdateStateApply nq st n U)
   | E_Meas : forall st x m,
       ceval <{ x :=measQ m }> st (UpdateStateMeasure nq st x m)
   | E_Seq : forall c1 c2 st st' st'',
