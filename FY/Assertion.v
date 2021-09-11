@@ -1,9 +1,11 @@
 From Coq Require Import Lists.List.
 From Coq Require Import Strings.String.
+From Coq Require Import Logic.ClassicalFacts.
 From FY Require Export Utils.
+From FY Require Export State.
 Import ListNotations.
 
-Definition Assertion (n: nat) := (total_map nat) -> Prop * (Unitary n).
+Definition Assertion (n: nat) := (total_map nat) -> bool_exp * (Unitary n).
 
 Fixpoint Expectation (ns na : nat) 
      (state: list ((total_map nat) * (Unitary ns))) 
@@ -11,12 +13,13 @@ Fixpoint Expectation (ns na : nat)
     match state with
     | [] => 0%C
     | st :: l => 
-        match (fst (assertion (fst st))) with
-         | True => Cplus 
-                    (trace (Mmult (kron (snd st) (I (ns - na))) 
-                    (snd (assertion (fst st))))) 
-                    (Expectation ns na l assertion)
-        end
+        if beval (fst st) (fst (assertion (fst st))) then 
+        Cplus 
+        (trace (Mmult (kron (snd st) (I (ns - na))) 
+        (snd (assertion (fst st))))) 
+        (Expectation ns na l assertion)
+        else
+        (Expectation ns na l assertion)
     end
 .
 

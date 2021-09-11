@@ -24,7 +24,7 @@ Definition apply_sub n (U: Unitary n) (P : Assertion n) : Assertion n :=
   fun (st : (total_map nat)) => pair (fst (P st)) (Mmult (Mmult U† (snd (P st))) U).
 
 Definition apply_boolean n (b: bool_exp) (P : Assertion n) : Assertion n :=
-  fun (st : (total_map nat)) => pair (beval st b = true) (snd (P st)).
+  fun (st : (total_map nat)) => pair b (snd (P st)).
 
 Theorem fy_sequence: forall np nq nr P Q R c1 c2, 
     hoare_triple np nq P c1 Q ->

@@ -38,13 +38,16 @@ Example state3:
 Proof.
 Admitted.
 
-Definition assert : Assertion 2 := fun (tmn: total_map nat) => pair (le (tmn X) 2%nat) H.
+Definition assert : Assertion 2 := fun (tmn: total_map nat) => pair <{ X <= (2 % nat) }> H.
 
-Example satisfied: fst (assert (X !-> 0%nat; _ !-> 1%nat)).
+Example satisfied: beval (X !-> 0%nat; _ !-> 1%nat) (fst (assert (X !-> 0%nat; _ !-> 1%nat))) = true.
+Proof. auto. Qed.
+
+Example expect: (Expectation 2 2 [((X !-> 0%nat; _ !-> 1%nat), H)] assert) = 2.
 Proof.
   simpl.
-  auto.
-Qed.
+  unfold Mmult.
+Admitted.
 
 Definition Prog1 : com :=
   <{ q 0 := 0;
@@ -87,6 +90,9 @@ Definition Prog3 : com :=
 
 Theorem state_eval_3: ceval Prog3 [((_ !-> 0%nat), I 2)] [((_ !-> 0%nat), H ⊗ ∣0⟩⟨0∣ ⊗ H†)].
 Proof.
+  eapply E_Seq.
+  - apply E_Init.
+  - unfold UpdateStateInit. simpl.
 Admitted.
 
 Definition Prog4 : com :=
@@ -101,6 +107,7 @@ Proof.
 Qed.
 
 
+Compute I 1.
 
 
 
