@@ -55,7 +55,7 @@ Definition Prog1 : com :=
      X :=measQ 0 }>.
 Print Prog1.
 
-Theorem state_eval_1: ceval Prog1 [((_ !-> 0%nat), I 2)] [((X !-> 0%nat ; _ !-> 1%nat), H) ; ((X !-> 1%nat; _ !-> 1%nat), H)].
+Theorem state_eval_1: ceval Prog1 [((_ !-> 0%nat), I 0)] [((X !-> 0%nat ; _ !-> 1%nat), H) ; ((X !-> 1%nat; _ !-> 1%nat), H)].
 Proof.
   eapply E_Seq.
   apply E_Init.
@@ -105,9 +105,6 @@ Theorem state_eval_5: ceval Prog5 [((_ !-> 0%nat), I 2%nat)] [((X !-> 2%nat; _ !
 Proof.
   eapply E_Ass.
 Qed.
-
-
-Compute I 1.
 
 
 
