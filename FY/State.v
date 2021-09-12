@@ -72,27 +72,25 @@ Fixpoint UpdateStateApply (n : nat) (state: list ((total_map nat)*(Unitary n))) 
   match state with
   | [] => []
   | st :: l => match U with
-      | GCNOT => (pair (fst st) ((ApplyTwoQubitsGate n qubit (geval U)) ⊗ (snd st) ⊗ (ApplyTwoQubitsGate n qubit (geval U))†) ) :: (UpdateStateApply n l qubit U)
-      | _ => (pair (fst st) ((ApplyOneQubitGate n qubit (geval U)) ⊗ (snd st) ⊗ (ApplyOneQubitGate n qubit (geval U))†) ) :: (UpdateStateApply n l qubit U)
+      | GCNOT => (pair (fst st) ((ApplyTwoQubitsGate n qubit (geval U)) × (snd st) × (ApplyTwoQubitsGate n qubit (geval U))†) ) :: (UpdateStateApply n l qubit U)
+      | _ => (pair (fst st) ((ApplyOneQubitGate n qubit (geval U)) × (snd st) × (ApplyOneQubitGate n qubit (geval U))†) ) :: (UpdateStateApply n l qubit U)
     end
   end.
 
 Fixpoint GetMeasurementBasis (nq : nat) (qubit : nat) (isZero : bool) : Unitary nq :=
-  match isZero with
-  | true => match nq with
-    | 0%nat => ∣0⟩⟨0∣
-    | S n' => ∣0⟩ ⊗ (GetMeasurementBasis n' qubit isZero)  ⊗ ⟨0∣
-    end
-  | false => match nq with
-    | 0%nat => if qubit =? 0%nat then ∣1⟩⟨1∣ else ∣0⟩⟨0∣
-    | S n' => if qubit =? nq then ∣1⟩ ⊗ (GetMeasurementBasis n' qubit isZero) ⊗ ⟨1∣ else ∣0⟩ ⊗ (GetMeasurementBasis n' qubit isZero)  ⊗ ⟨0∣
-    end
+  match nq with
+    | 0%nat => if qubit =? nq then (if isZero then ∣0⟩⟨0∣ else ∣1⟩⟨1∣) else (I 2)
+    | S n' => (if qubit =? nq then (if isZero then ∣0⟩⟨0∣ else ∣1⟩⟨1∣) else (I 2)) ⊗ (GetMeasurementBasis n' qubit isZero)
   end.
 
 Fixpoint UpdateStateMeasure (n : nat)  (state: list ((total_map nat)*(Unitary n))) (x : string) (qubit : nat) : list ((total_map nat)*(Unitary n)) :=
   match state with
   | [] => []
-  | st :: l => (pair (x !-> 0%nat; fst st) ((GetMeasurementBasis n qubit true) ⊗ (snd st) ⊗ (GetMeasurementBasis n qubit true)†)) :: (pair (x !-> 1%nat; fst st) ((GetMeasurementBasis n qubit false) ⊗ (snd st) ⊗ (GetMeasurementBasis n qubit false)†)) :: (UpdateStateMeasure n l x qubit)
+  | st :: l => (pair (x !-> 0%nat; fst st) 
+     (Mscale (Cinv (trace ((GetMeasurementBasis n qubit true) × (snd st) × (GetMeasurementBasis n qubit true)†))) ((GetMeasurementBasis n qubit true) × (snd st) × (GetMeasurementBasis n qubit true)†))) :: 
+     (pair (x !-> 1%nat; fst st) 
+     (Mscale (Cinv (trace ((GetMeasurementBasis n qubit false) × (snd st) × (GetMeasurementBasis n qubit false)†))) ((GetMeasurementBasis n qubit false) × (snd st) × (GetMeasurementBasis n qubit false)†))):: 
+     (UpdateStateMeasure n l x qubit)
   end.
 
 Fixpoint Filter (n : nat) (state: list ((total_map nat)*(Unitary n))) (b : bool_exp): list ((total_map nat)*(Unitary n)) :=
