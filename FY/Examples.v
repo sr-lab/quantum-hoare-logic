@@ -99,12 +99,27 @@ Definition Prog4 : com :=
   <{ q 0%nat := 0 }>.
 
 Definition Prog5 : com :=
-  <{ X :=c (2 % nat) }>.
+  <{ X :=c (2 % nat);
+    q 0 := 0;
+    if X == (2 % nat) then
+       q 0 *= GH
+    else
+       q 0 *= GX
+    end}>.
 
-Theorem state_eval_5: ceval Prog5 [((_ !-> 0%nat), I 2%nat)] [((X !-> 2%nat; _ !-> 0%nat), I 2%nat)].
+Theorem state_eval_5: ceval Prog5 [((_ !-> 0%nat), I 2%nat)] [((X !-> 2%nat; _ !-> 0%nat), H × ∣0⟩⟨0∣ × H†)].
 Proof.
-  eapply E_Ass.
-Qed.
+  eapply E_Seq.
+  apply E_Ass.
+  eapply E_Seq.
+  apply E_Init.
+  apply E_IfFalse.
+  simpl.
+  (* there is a problem here*)
+  (* eapply E_AppOne. *)
+Abort.
+
+
 
 
 
