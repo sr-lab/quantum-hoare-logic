@@ -43,11 +43,34 @@ Definition assert : Assertion 2 := fun (tmn: total_map nat) => pair <{ X <= (2 %
 Example satisfied: beval (X !-> 0%nat; _ !-> 1%nat) (fst (assert (X !-> 0%nat; _ !-> 1%nat))) = true.
 Proof. auto. Qed.
 
-Example expect: (Expectation 2 2 [((X !-> 0%nat; _ !-> 1%nat), H)] assert) = 2.
+Lemma HI0 : H ⊗ I 0 = H.
+Proof.
+Admitted.
+
+Lemma SC0 : forall (c : C), Cplus c 0 = c.
+Proof.
+Admitted.
+
+Lemma HHI : trace (H × H) = 1. 
+Proof.
+  unfold trace.
+  unfold H.
+  unfold Mmult.
+  simpl.
+  rewrite Cplus_0_l.
+Admitted.
+
+
+Example expect: (Expectation 2 2 [((X !-> 0%nat; _ !-> 1%nat), H)] assert) = 1.
 Proof.
   simpl.
-  unfold Mmult.
-Admitted.
+  rewrite HI0.
+  rewrite SC0.
+  (*There is a problem here*)
+  (*rewrite HHI.
+  auto.*)
+Qed.
+
 
 Definition Prog1 : com :=
   <{ q 0 := 0;
