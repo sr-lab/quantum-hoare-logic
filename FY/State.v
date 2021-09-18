@@ -37,6 +37,7 @@ Definition geval (g : gate_exp) : Unitary _ :=
   | GZ => Z
   | GY => Y
   | GCNOT => CNOT
+  | GOracle n U => U
   end.
 
 Definition quantum_registry := string -> nat.
@@ -44,13 +45,19 @@ Definition quantum_registry := string -> nat.
 Fixpoint ApplyOneQubitGate (n : nat) (qubit : nat) (U : Unitary 2) : Unitary n :=
   match n with 
   | O%nat => if qubit =? 0%nat then U else I 2
-  | S n' => (if qubit =? n' then U else I 2) ⊗ (ApplyOneQubitGate n' qubit U)
+  | S n' => (if qubit =? n then U else I 2) ⊗ (ApplyOneQubitGate n' qubit U)
   end. 
 
 Fixpoint ApplyTwoQubitsGate (n : nat) (qubit : nat) (U : Unitary 4) : Unitary n :=
   match n with
   | 0%nat => if qubit =? 0%nat then U else I 4
-  | S n' => if qubit =? n' then (U ⊗ (ApplyTwoQubitsGate (n' - 1) qubit U)) else ((I 2) ⊗ (ApplyTwoQubitsGate n' qubit U))
+  | S n' => if qubit =? n then (U ⊗ (ApplyTwoQubitsGate (n' - 1) qubit U)) else ( if n =? qubit + 1 then (I 1) else ((I 2) ⊗ (ApplyTwoQubitsGate n' qubit U)))
+  end.
+
+Fixpoint ApplyThreeQubitsGate (n : nat) (qubit : nat) (U : Unitary 8) : Unitary n :=
+  match n with
+  | 0%nat => if qubit =? 0%nat then U else I 4
+  | S n' => if qubit =? n then (U ⊗ (ApplyThreeQubitsGate (n' - 1) qubit U)) else ( if (orb (n =? (qubit + 1)) (n =? (qubit + 2))) then (I 1) else ((I 2) ⊗ (ApplyThreeQubitsGate n' qubit U)))
   end.
 
 Fixpoint UpdateStateAssign (n : nat) (state: list ((total_map nat)*(Unitary n))) (x : string) (a : arith_exp) : list ((total_map nat)*(Unitary n)) :=
@@ -72,6 +79,7 @@ Fixpoint UpdateStateApply (n : nat) (state: list ((total_map nat)*(Unitary n))) 
   match state with
   | [] => []
   | st :: l => match U with
+      | GOracle m GU => (pair (fst st) ((ApplyThreeQubitsGate n qubit (geval U)) × (snd st) × (ApplyThreeQubitsGate n qubit (geval U))†) ) :: (UpdateStateApply n l qubit U)
       | GCNOT => (pair (fst st) ((ApplyTwoQubitsGate n qubit (geval U)) × (snd st) × (ApplyTwoQubitsGate n qubit (geval U))†) ) :: (UpdateStateApply n l qubit U)
       | _ => (pair (fst st) ((ApplyOneQubitGate n qubit (geval U)) × (snd st) × (ApplyOneQubitGate n qubit (geval U))†) ) :: (UpdateStateApply n l qubit U)
     end

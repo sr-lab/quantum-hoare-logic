@@ -31,7 +31,8 @@ Inductive gate_exp : Type :=
   | GY 
   | GZ
   | GI
-  | GCNOT.
+  | GCNOT
+  | GOracle (n : nat) (U : Matrix n n).
 
 Coercion AId : string >-> arith_exp.
 Coercion ANum : nat >-> arith_exp.
@@ -63,6 +64,7 @@ Inductive com : Type :=
   | CInit (q : nat)
   | CAppOne (q : nat) (U : gate_exp)
   | CAppTwo (q1 : nat) (q2 : nat) (U : gate_exp)
+  | CAppThree (q1 : nat) (q2 : nat) (q3 : nat) (U : gate_exp)
   | CSeq (c1 c2 : com)
   | CIf (b : bool_exp) (c1 c2 : com)
   | CWhile (b : bool_exp) (c : com).
@@ -80,14 +82,19 @@ Notation "x ':=measQ' n" :=
 Notation "'q' q := 0" :=
     (CInit q)
        (in custom com at level 0, q constr at level 0, no associativity) : com_scope.
-Notation "'q' n *= U" :=
+Notation "'q' n *=1 U" :=
     (CAppOne n U)
        (in custom com at level 0, n constr at level 0, 
        U at level 85, no associativity) : com_scope.
-Notation "'q' n m *= U" :=
+Notation "'q' n m *=2 U" :=
     (CAppTwo n m U)
        (in custom com at level 0, n constr at level 0, 
        m constr at level 0, U at level 85, no associativity) : com_scope.
+Notation "'q' n m p *=3 U" :=
+    (CAppThree n m p U)
+       (in custom com at level 0, n constr at level 0, 
+       m constr at level 0, p constr at level 0,
+       U at level 85, no associativity) : com_scope.
 Notation "x ; y" :=
     (CSeq x y)
       (in custom com at level 90, right associativity) : com_scope.

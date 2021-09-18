@@ -57,7 +57,8 @@ Proof.
   unfold H.
   unfold Mmult.
   simpl.
-  rewrite Cplus_0_l.
+  unfold Cplus.
+  simpl.
 Admitted.
 
 
@@ -69,12 +70,12 @@ Proof.
   (*There is a problem here*)
   (*rewrite HHI.
   auto.*)
-Qed.
+Admitted.
 
 
 Definition Prog1 : com :=
   <{ q 0 := 0;
-     q 0 *= GH;
+     q 0 *=1 GH;
      X :=measQ 0 }>.
 Print Prog1.
 
@@ -98,10 +99,10 @@ Admitted.
 
 Definition Prog2 : com :=
   <{ q 0 := 0;
-     q 0 *= GH;
+     q 0 *=1 GH;
      X :=measQ 0%nat;
      if false then
-        q 0 *= GZ
+        q 0 *=1 GZ
      else
         skip
     end }>.
@@ -109,7 +110,7 @@ Print Prog2.
 
 Definition Prog3 : com :=
   <{ q 0 := 0;
-     q 0 *= GH }>.
+     q 0 *=1 GH }>.
 
 Theorem state_eval_3: ceval Prog3 [((_ !-> 0%nat), I 2)] [((_ !-> 0%nat), H ⊗ ∣0⟩⟨0∣ ⊗ H†)].
 Proof.
@@ -125,9 +126,9 @@ Definition Prog5 : com :=
   <{ X :=c (2 % nat);
     q 0 := 0;
     if X == (2 % nat) then
-       q 0 *= GH
+       q 0 *=1 GH
     else
-       q 0 *= GX
+       q 0 *=1 GX
     end}>.
 
 Theorem state_eval_5: ceval Prog5 [((_ !-> 0%nat), I 2%nat)] [((X !-> 2%nat; _ !-> 0%nat), H × ∣0⟩⟨0∣ × H†)].

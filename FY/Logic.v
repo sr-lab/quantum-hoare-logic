@@ -44,7 +44,7 @@ Proof.
 Admitted.
 
 Theorem fy_apply: forall n m G P, 
-    hoare_triple n n (apply_sub n (geval G) P) <{ q m *= G }> P.
+    hoare_triple n n (apply_sub n (geval G) P) <{ q m *=1 G }> P.
 Proof.
 Admitted.
 
