@@ -15,17 +15,17 @@ Definition TELEPORT : com :=
      q 0 := 0;
      q 1 := 0;
      q 2 := 0;
-     q 1 *= GH;
-     q 1 2 *= GCNOT;
-     q 0 1 *= GCNOT;
-     q 0 *= GH;
+     q 1 *=1 GH;
+     q 1 2 *=2 GCNOT;
+     q 0 1 *=2 GCNOT;
+     q 0 *=1 GH;
      X0 :=measQ 0;
      X1 :=measQ 1;
      if X0 == (0 % nat)
      then 
-       if X1 == (1 % nat) then q 2 *= GX else skip end 
+       if X1 == (1 % nat) then q 2 *=1 GX else skip end 
      else
-       if X1 == (1 % nat) then q 2 *= GX; q 2 *= GZ else q 2 *= GZ end 
+       if X1 == (1 % nat) then q 2 *=1 GX; q 2 *=1 GZ else q 2 *=1 GZ end 
      end
   }>.
 

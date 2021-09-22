@@ -1473,6 +1473,10 @@ Arguments q_plus _ _ /.
 Arguments q_minus _ _ /.
 Notation "∣ + ⟩" := q_plus.
 Notation "∣ - ⟩" := q_minus.
+Notation "⟨ + ∣" := q_plus†.
+Notation "⟨ - ∣" := q_minus†.
+Notation "'⟨' x '∣'" := (bra x).
+Notation "'⟨' x '∣'" := (bra x).
 
 Inductive measure : Qubit -> (R * Qubit) -> Prop :=
   | measure0 : forall (ϕ : Qubit), measure ϕ (⎸ϕ 0%nat 0%nat ⎸², ∣0⟩)

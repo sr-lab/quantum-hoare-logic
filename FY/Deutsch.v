@@ -12,8 +12,7 @@ Definition Y : string := "Y".
 Definition K : string := "K".
 
 Definition DJ : com :=
-  <{
-  }>.
+  <{ skip }>.
 
 Print DJ.
 

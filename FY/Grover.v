@@ -22,7 +22,7 @@ Definition U100 : Matrix 8 8 := l2M [[1;0;0;0;0;0;0;0];
                                      [0;0;0;0;0;0;1;0];
                                      [0;0;0;0;0;0;0;1]].
 
-Lemma U100W: U100 × ∣1,0,0⟩ = -1 * ∣1,0,0⟩.
+Lemma U100W: U100 × ∣1,0,0⟩ == -1 * ∣1,0,0⟩.
 Proof.
 Admitted.
 
@@ -31,11 +31,17 @@ Lemma U100NW: forall (w: Vector 8), w <> ∣1,0,0⟩ -> U100 × w = w.
 Proof.
 Admitted.
 
-Definition G := GOracle 8 U100.
+(* Definition G := GOracle 8 (( 2 * (∣+⟩⊗∣+⟩⊗∣+⟩⟨+∣⊗⟨+∣⊗⟨+∣) - (I 8)) × U100). *)
 
-Lemma kron_I_1: kron (I 2) (I 1) = I 2.
+
+Definition Us : Unitary 8 := ((∣+⟩⊗∣+⟩⊗∣+⟩)×(⟨+∣⊗⟨+∣⊗⟨+∣)) + (-1 * (I 8)).
+
+Definition G := GOracle 8 (Us × U100).
+
+Lemma kron_I_1: kron (I 2) (I 1) == I 2.
 Proof.
-Admitted.
+  lma.
+Qed.
 
 Definition GROVER : com :=
   <{
@@ -62,7 +68,29 @@ Theorem final_state: ceval GROVER [(( _ !-> 0%nat), I 1)] [(( X !-> 3%nat ; K !-
 Proof.
   eapply E_Seq.
   apply E_Init.
+  eapply E_Seq.
+  apply E_Init.
+  eapply E_Seq.
+  apply E_Init.
+  eapply E_Seq.
+  apply E_AppOne.
+  simpl.
+  eapply E_Seq.
+  apply E_AppOne.
+  simpl.
+  eapply E_Seq.
+  apply E_AppOne.
+  simpl.
+  eapply E_Seq.
+  apply E_Ass.
+  simpl.
+  eapply E_Seq.
+  apply E_Ass.
+  simpl.
+  eapply E_Seq.
+  (* there is a problem *)
 Admitted.
+
 
 
 
