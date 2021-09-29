@@ -10,9 +10,18 @@ Definition hoare_triple
     (np nq: nat)(P : Assertion np) (c : com) (Q : Assertion nq) : Prop :=
     forall ns1 ns2 np nq st1 st2, ceval c st1 st2 -> Cnorm (Expectation ns1 np st1 P) <= Cnorm (Expectation ns2 nq st2 Q).
 
-Theorem fy_skip: forall n P, hoare_triple n n P <{skip}> P.
+Theorem equal_expectations: forall ns1 ns2 np nq P st, Cnorm (Expectation ns1 np st P) <= Cnorm (Expectation ns2 nq st P).
 Proof.
 Admitted.
+
+Theorem fy_skip: forall n P, hoare_triple n n P <{skip}> P.
+Proof.
+    unfold hoare_triple.
+    intros.
+    inversion H.
+    subst.
+    apply equal_expectations.
+Qed.
 
 Definition assign_sub n X a (P : Assertion n) : Assertion n :=
   fun (st : (total_map nat)) => P (X !-> a ; st).

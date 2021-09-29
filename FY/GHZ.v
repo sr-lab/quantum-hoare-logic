@@ -27,7 +27,7 @@ Print GHZ.
 Theorem final_state: ceval GHZ [(( _ !-> 0%nat), I 1)] 
   [(( X0 !-> 0%nat; X1 !-> 0%nat; X2 !-> 0%nat; _ !-> 0%nat), I 3); 
    (( X0 !-> 1%nat; X1 !-> 1%nat; X2 !-> 1%nat; _ !-> 0%nat), I 3)].
-Proof.
+Proof. 
   eapply E_Seq.
   apply E_Init.
   simpl.
@@ -54,6 +54,7 @@ Proof.
   simpl.
 Abort.
 
+(* TODO : Swap gate+no cloning*)
 Definition P (tm: total_map nat): Assertion 3 := fun tm => (<{ true }>, I 0).
 Definition Q (tm: total_map nat): Assertion 3 := fun tm => (<{ X1 == X2 }>, I 3).
 
