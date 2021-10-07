@@ -74,9 +74,9 @@ Admitted.
 
 
 Definition Prog1 : com :=
-  <{ q 0 := 0;
-     q 0 *=1 GH;
-     X :=measQ 0 }>.
+  <{ new_qubit;
+     q 0 *= GH;
+     X :=meas 0 }>.
 Print Prog1.
 
 Theorem state_eval_1: ceval Prog1 [((_ !-> 0%nat), I 0)] [((X !-> 0%nat ; _ !-> 1%nat), H) ; ((X !-> 1%nat; _ !-> 1%nat), H)].
@@ -98,19 +98,19 @@ Admitted.
 *)
 
 Definition Prog2 : com :=
-  <{ q 0 := 0;
-     q 0 *=1 GH;
-     X :=measQ 0%nat;
+  <{ new_qubit;
+     q 0 *= GH;
+     X :=meas 0%nat;
      if false then
-        q 0 *=1 GZ
+        q 0 *= GZ
      else
         skip
     end }>.
 Print Prog2.
 
 Definition Prog3 : com :=
-  <{ q 0 := 0;
-     q 0 *=1 GH }>.
+  <{ new_qubit;
+     q 0 *= GH }>.
 
 Theorem state_eval_3: ceval Prog3 [((_ !-> 0%nat), I 2)] [((_ !-> 0%nat), H ⊗ ∣0⟩⟨0∣ ⊗ H†)].
 Proof.
@@ -120,15 +120,15 @@ Proof.
 Admitted.
 
 Definition Prog4 : com :=
-  <{ q 0%nat := 0 }>.
+  <{ new_qubit }>.
 
 Definition Prog5 : com :=
-  <{ X :=c (2 % nat);
-    q 0 := 0;
+  <{ X := (2 % nat);
+    new_qubit;
     if X == (2 % nat) then
-       q 0 *=1 GH
+       q 0 *= GH
     else
-       q 0 *=1 GX
+       q 0 *= GX
     end}>.
 
 Theorem state_eval_5: ceval Prog5 [((_ !-> 0%nat), I 2%nat)] [((X !-> 2%nat; _ !-> 0%nat), H × ∣0⟩⟨0∣ × H†)].

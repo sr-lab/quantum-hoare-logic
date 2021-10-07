@@ -12,15 +12,15 @@ Definition X1 : string := "X1".
 Definition X2 : string := "X2".
 
 Definition GHZ : com :=
-  <{ q 0 := 0;
-     q 1 := 0;
-     q 2 := 0;
-     q 0 *=1 GH;
-     q 0 1 *=2 GCNOT;
-     q 1 2 *=2 GCNOT;
-     X0 :=measQ 0;
-     X1 :=measQ 1;
-     X2 :=measQ 2 }>.
+  <{ new_qubit;
+     new_qubit;
+     new_qubit;
+     q 0 *= GH;
+     q 0 1 *= GCNOT;
+     q 1 2 *= GCNOT;
+     X0 :=meas 0;
+     X1 :=meas 1;
+     X2 :=meas 2 }>.
 
 Print GHZ.
 

@@ -61,40 +61,35 @@ Inductive com : Type :=
   | CSkip
   | CAss (x : string) (a : arith_exp)
   | CMeas (x : string) (q : nat)
-  | CInit (q : nat)
+  | CInit
   | CAppOne (q : nat) (U : gate_exp)
   | CAppTwo (q1 : nat) (q2 : nat) (U : gate_exp)
-  | CAppThree (q1 : nat) (q2 : nat) (q3 : nat) (U : gate_exp)
   | CSeq (c1 c2 : com)
   | CIf (b : bool_exp) (c1 c2 : com)
   | CWhile (b : bool_exp) (c : com).
 
 Notation "'skip'" :=
     CSkip (in custom com at level 0) : com_scope.
-Notation "x ':=c' y" :=
+Notation "x ':=' y" :=
     (CAss x y)
        (in custom com at level 0, x constr at level 0,
         y at level 40, no associativity) : com_scope.
-Notation "x ':=measQ' n" :=
+Notation "x ':=meas' n" :=
     (CMeas x n)
        (in custom com at level 0, x constr at level 0,
         n constr at level 77, no associativity) : com_scope.
-Notation "'q' q := 0" :=
-    (CInit q)
-       (in custom com at level 0, q constr at level 0, no associativity) : com_scope.
-Notation "'q' n *=1 U" :=
+Notation "'new_qubit'" :=
+    (CInit)
+       (in custom com at level 0, no associativity) : com_scope.
+Notation "'q' n *= U" :=
     (CAppOne n U)
        (in custom com at level 0, n constr at level 0, 
        U at level 85, no associativity) : com_scope.
-Notation "'q' n m *=2 U" :=
+Notation "'q' n m *= U" :=
     (CAppTwo n m U)
        (in custom com at level 0, n constr at level 0, 
-       m constr at level 0, U at level 85, no associativity) : com_scope.
-Notation "'q' n m p *=3 U" :=
-    (CAppThree n m p U)
-       (in custom com at level 0, n constr at level 0, 
-       m constr at level 0, p constr at level 0,
-       U at level 85, no associativity) : com_scope.
+        m constr at level 0, U at level 85,
+        no associativity) : com_scope.
 Notation "x ; y" :=
     (CSeq x y)
       (in custom com at level 90, right associativity) : com_scope.

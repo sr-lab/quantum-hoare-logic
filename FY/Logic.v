@@ -5,12 +5,12 @@ From FY Require Export Syntax.
 From FY Require Export Semantics.
 From FY Require Export Assertion.
 
-
 Definition hoare_triple 
     (np nq: nat)(P : Assertion np) (c : com) (Q : Assertion nq) : Prop :=
-    forall ns1 ns2 np nq st1 st2, ceval c st1 st2 -> Cnorm (Expectation ns1 np st1 P) <= Cnorm (Expectation ns2 nq st2 Q).
+    forall ns1 ns2 st1 st2, ceval c st1 st2 -> Cnorm (Expectation ns1 np st1 P) <= Cnorm (Expectation ns2 nq st2 Q).
 
-Theorem equal_expectations: forall ns1 ns2 np nq P st, Cnorm (Expectation ns1 np st P) <= Cnorm (Expectation ns2 nq st P).
+Theorem equal_expectations: forall ns1 ns2 np nq P st, 
+  Cnorm (Expectation ns1 np st P) <= Cnorm (Expectation ns2 nq st P).
 Proof.
 Admitted.
 
@@ -40,26 +40,30 @@ Theorem fy_sequence: forall np nq nr P Q R c1 c2,
     hoare_triple nq nr Q c2 R ->
     hoare_triple np nr P <{ c1;c2 }> R.
 Proof.
+    unfold hoare_triple.
+    intros.
+    inversion H1.
+    subst.
 Admitted.
 
 Theorem fy_assign: forall n x e P, 
-    hoare_triple n n (assign_sub n x e P) <{ x :=c e }> P.
+    hoare_triple n n (assign_sub n x e P) <{ x := e }> P.
 Proof.
 Admitted.
 
-Theorem fy_init: forall n m P, 
-    hoare_triple n n (init_sub n P) <{ q m := 0 }> P.
+Theorem fy_init: forall n P, 
+    hoare_triple n n (init_sub n P) <{ new_qubit }> P.
 Proof.
 Admitted.
 
 Theorem fy_apply: forall n m G P, 
-    hoare_triple n n (apply_sub n (geval G) P) <{ q m *=1 G }> P.
+    hoare_triple n n (apply_sub n (geval G) P) <{ q m *= G }> P.
 Proof.
 Admitted.
 
 (*TODO*)
 Theorem fy_measure: forall n x m P, 
-    hoare_triple n n P  <{ x :=measQ m }> P.
+    hoare_triple n n P  <{ x :=meas m }> P.
 Proof.
 Admitted.
 

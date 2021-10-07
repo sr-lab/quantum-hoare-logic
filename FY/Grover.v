@@ -45,21 +45,21 @@ Qed.
 
 Definition GROVER : com :=
   <{
-    q 0 := 0;
-    q 1 := 0;
-    q 2 := 0;
-    q 0 *=1 GH;
-    q 1 *=1 GH;
-    q 2 *=1 GH;
-    K :=c (3 % nat); (* 3 ~ sqrt(8) *)
-    X :=c (0 % nat);
+    new_qubit;
+    new_qubit;
+    new_qubit;
+    q 0 *= GH;
+    q 1 *= GH;
+    q 2 *= GH;
+    K := (3 % nat); (* 3 ~ sqrt(8) *)
+    X := (0 % nat);
     while X <= K do
-      q 0 1 2 *=3 G;
-      X :=c (X + 1%nat)
+      q 0 1 *= G;
+      X := (X + 1%nat)
     end;
-    Y0 :=measQ 0;
-    Y1 :=measQ 1;
-    Y2 :=measQ 2
+    Y0 :=meas 0;
+    Y1 :=meas 1;
+    Y2 :=meas 2
   }>.
 
 Print GROVER.

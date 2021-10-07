@@ -62,17 +62,17 @@ Fixpoint ApplyThreeQubitsGate (n : nat) (qubit : nat) (U : Unitary 8) : Unitary 
 
 Fixpoint UpdateStateAssign (n : nat) (state: list ((total_map nat)*(Unitary n))) (x : string) (a : arith_exp) : list ((total_map nat)*(Unitary n)) :=
   match state with
-  | [] => []
+  | [] => (pair (x !-> (aeval (_ !-> 0%nat) a); _ !-> 0%nat) (I 2)) :: nil
   | st :: l => (pair (x !-> (aeval (fst st) a); fst st) (snd st)) :: (UpdateStateAssign n l x a)
   end.
 
-Fixpoint UpdateStateInit (n : nat) (state: list ((total_map nat)*(Unitary n))) (qubit : nat): list ((total_map nat)*(Unitary n)) :=
+Fixpoint UpdateStateInit (n : nat) (state: list ((total_map nat)*(Unitary n))) : list ((total_map nat)*(Unitary n)) :=
   match state with
-  | [] => []
-  | st :: l => if qubit =? 0 then 
-    (pair (fst st) (∣0⟩⟨0∣)) :: (UpdateStateInit n l qubit)
+  | [] => (pair (_ !-> 0%nat) ∣0⟩⟨0∣) :: nil
+  | st :: l => if n =? 0 then
+    (pair (fst st) (∣0⟩⟨0∣)) :: (UpdateStateInit n l)
     else
-    (pair (fst st) (∣0⟩ ⊗ (snd st) ⊗ ⟨0∣)) :: (UpdateStateInit n l qubit)
+    (pair (fst st) (∣0⟩ ⊗ (snd st) ⊗ ⟨0∣)) :: (UpdateStateInit n l)
   end.
 
 Fixpoint UpdateStateApply (n : nat) (state: list ((total_map nat)*(Unitary n))) (qubit : nat) (U: gate_exp): list ((total_map nat)*(Unitary n)) :=
@@ -95,9 +95,9 @@ Fixpoint UpdateStateMeasure (n : nat)  (state: list ((total_map nat)*(Unitary n)
   match state with
   | [] => []
   | st :: l => (pair (x !-> 0%nat; fst st) 
-     (Mscale (Cinv (trace ((GetMeasurementBasis n qubit true) × (snd st) × (GetMeasurementBasis n qubit true)†))) ((GetMeasurementBasis n qubit true) × (snd st) × (GetMeasurementBasis n qubit true)†))) :: 
+     ((GetMeasurementBasis n qubit true) × (snd st) × (GetMeasurementBasis n qubit true)†)) :: 
      (pair (x !-> 1%nat; fst st) 
-     (Mscale (Cinv (trace ((GetMeasurementBasis n qubit false) × (snd st) × (GetMeasurementBasis n qubit false)†))) ((GetMeasurementBasis n qubit false) × (snd st) × (GetMeasurementBasis n qubit false)†))):: 
+     ((GetMeasurementBasis n qubit false) × (snd st) × (GetMeasurementBasis n qubit false)†)):: 
      (UpdateStateMeasure n l x qubit)
   end.
 
