@@ -7,6 +7,7 @@ From Coq Require Import Strings.String.
 From FY Require Export Utils.
 From FY Require Export Syntax.
 
+
 Fixpoint aeval (st : total_map nat)
         (a : arith_exp) : nat :=
   match a with
@@ -40,74 +41,60 @@ Definition geval (g : gate_exp) : Unitary _ :=
   | GOracle n U => U
   end.
 
-Definition quantum_registry := string -> nat.
-
-Fixpoint ApplyOneQubitGate (n : nat) (qubit : nat) (U : Unitary 2) : Unitary n :=
+Fixpoint padding (n : nat) (qubit : nat) (U : Unitary 2) : Unitary (2^(n + 1%nat)) :=
   match n with 
   | O%nat => if qubit =? 0%nat then U else I 2
-  | S n' => (if qubit =? n then U else I 2) ⊗ (ApplyOneQubitGate n' qubit U)
+  | S n' => (if qubit =? n then U else I 2) ⊗ (padding n' qubit U)
   end. 
 
-Fixpoint ApplyTwoQubitsGate (n : nat) (qubit : nat) (U : Unitary 4) : Unitary n :=
-  match n with
-  | 0%nat => if qubit =? 0%nat then U else I 4
-  | S n' => if qubit =? n then (U ⊗ (ApplyTwoQubitsGate (n' - 1) qubit U)) else ( if n =? qubit + 1 then (I 1) else ((I 2) ⊗ (ApplyTwoQubitsGate n' qubit U)))
-  end.
-
-Fixpoint ApplyThreeQubitsGate (n : nat) (qubit : nat) (U : Unitary 8) : Unitary n :=
-  match n with
-  | 0%nat => if qubit =? 0%nat then U else I 4
-  | S n' => if qubit =? n then (U ⊗ (ApplyThreeQubitsGate (n' - 1) qubit U)) else ( if (orb (n =? (qubit + 1)) (n =? (qubit + 2))) then (I 1) else ((I 2) ⊗ (ApplyThreeQubitsGate n' qubit U)))
-  end.
-
-Fixpoint UpdateStateAssign (n : nat) (state: list ((total_map nat)*(Unitary n))) (x : string) (a : arith_exp) : list ((total_map nat)*(Unitary n)) :=
+Fixpoint UpdateStateAssign (n : nat) (state: list ((total_map nat)*(Unitary (2^n)))) (x : string) (a : arith_exp) : list ((total_map nat)*(Unitary (2^n))) :=
   match state with
-  | [] => (pair (x !-> (aeval (_ !-> 0%nat) a); _ !-> 0%nat) (I 2)) :: nil
+  | [] => []
   | st :: l => (pair (x !-> (aeval (fst st) a); fst st) (snd st)) :: (UpdateStateAssign n l x a)
   end.
 
-Fixpoint UpdateStateInit (n : nat) (state: list ((total_map nat)*(Unitary n))) : list ((total_map nat)*(Unitary n)) :=
+Fixpoint UpdateStateInit (n : nat) (state: list ((total_map nat)*(Unitary (2^n)))) : list ((total_map nat)*(Unitary (2^(n + 1%nat)))) :=
   match state with
-  | [] => (pair (_ !-> 0%nat) ∣0⟩⟨0∣) :: nil
-  | st :: l => if n =? 0 then
+  | [] => []
+  | st :: l => if n =? 0%nat then
     (pair (fst st) (∣0⟩⟨0∣)) :: (UpdateStateInit n l)
     else
     (pair (fst st) (∣0⟩ ⊗ (snd st) ⊗ ⟨0∣)) :: (UpdateStateInit n l)
   end.
 
-Fixpoint UpdateStateApply (n : nat) (state: list ((total_map nat)*(Unitary n))) (qubit : nat) (U: gate_exp): list ((total_map nat)*(Unitary n)) :=
+Fixpoint UpdateStateApply (n : nat) (state: list ((total_map nat)*(Unitary (2^n)))) (qubit : nat) (U: gate_exp): list ((total_map nat)*(Unitary (2^n))) :=
   match state with
   | [] => []
   | st :: l => match U with
-      | GOracle m GU => (pair (fst st) ((ApplyThreeQubitsGate n qubit (geval U)) × (snd st) × (ApplyThreeQubitsGate n qubit (geval U))†) ) :: (UpdateStateApply n l qubit U)
-      | GCNOT => (pair (fst st) ((ApplyTwoQubitsGate n qubit (geval U)) × (snd st) × (ApplyTwoQubitsGate n qubit (geval U))†) ) :: (UpdateStateApply n l qubit U)
-      | _ => (pair (fst st) ((ApplyOneQubitGate n qubit (geval U)) × (snd st) × (ApplyOneQubitGate n qubit (geval U))†) ) :: (UpdateStateApply n l qubit U)
+      | GOracle m GU => (pair (fst st) ((padding (n - 1%nat) qubit (geval U)) × (snd st) × (padding (n - 1%nat) qubit (geval U))†) ) :: (UpdateStateApply n l qubit U)
+      | GCNOT => (pair (fst st) ((padding (n - 2%nat) qubit (geval U)) × (snd st) × (padding (n - 2%nat) qubit (geval U))†) ) :: (UpdateStateApply n l qubit U)
+      | _ => (pair (fst st) ((padding (n - 1%nat) qubit (geval U)) × (snd st) × (padding (n - 1%nat) qubit (geval U))†) ) :: (UpdateStateApply n l qubit U)
     end
   end.
 
-Fixpoint GetMeasurementBasis (nq : nat) (qubit : nat) (isZero : bool) : Unitary nq :=
+Fixpoint GetMeasurementBasis (nq : nat) (qubit : nat) (isZero : bool) : Unitary (2^(nq + 1%nat)) :=
   match nq with
     | 0%nat => if qubit =? nq then (if isZero then ∣0⟩⟨0∣ else ∣1⟩⟨1∣) else (I 2)
     | S n' => (if qubit =? nq then (if isZero then ∣0⟩⟨0∣ else ∣1⟩⟨1∣) else (I 2)) ⊗ (GetMeasurementBasis n' qubit isZero)
   end.
 
-Fixpoint UpdateStateMeasure (n : nat)  (state: list ((total_map nat)*(Unitary n))) (x : string) (qubit : nat) : list ((total_map nat)*(Unitary n)) :=
+Fixpoint UpdateStateMeasure (n : nat)  (state: list ((total_map nat)*(Unitary (2^n)))) (x : string) (qubit : nat) : list ((total_map nat)*(Unitary (2^n))) :=
   match state with
   | [] => []
   | st :: l => (pair (x !-> 0%nat; fst st) 
-     ((GetMeasurementBasis n qubit true) × (snd st) × (GetMeasurementBasis n qubit true)†)) :: 
+     (((GetMeasurementBasis (n - 1%nat) qubit true) × (snd st)) × (GetMeasurementBasis (n - 1%nat) qubit true)†)) :: 
      (pair (x !-> 1%nat; fst st) 
-     ((GetMeasurementBasis n qubit false) × (snd st) × (GetMeasurementBasis n qubit false)†)):: 
+     (((GetMeasurementBasis (n - 1%nat) qubit false) × (snd st)) × (GetMeasurementBasis (n - 1%nat) qubit false)†)):: 
      (UpdateStateMeasure n l x qubit)
   end.
 
-Fixpoint Filter (n : nat) (state: list ((total_map nat)*(Unitary n))) (b : bool_exp): list ((total_map nat)*(Unitary n)) :=
+Fixpoint Filter (n : nat) (state: list ((total_map nat)*(Unitary (2^n)))) (b : bool_exp): list ((total_map nat)*(Unitary (2^n))) :=
   match state with
   | [] => []
   | st :: l => if (beval (fst st) b) then (st :: (Filter n l b)) else (Filter n l b)
   end.
 
-Fixpoint FilterNeg (n : nat) (state: list ((total_map nat)*(Unitary n))) (b : bool_exp): list ((total_map nat)*(Unitary n)) :=
+Fixpoint FilterNeg (n : nat) (state: list ((total_map nat)*(Unitary (2^n)))) (b : bool_exp): list ((total_map nat)*(Unitary (2^n))) :=
   match state with
   | [] => []
   | st :: l => if (negb (beval (fst st) b)) then (st :: (FilterNeg n l b)) else (FilterNeg n l b)

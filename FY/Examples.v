@@ -9,8 +9,6 @@ From FY Require Export Assertion.
 Definition X : string := "X".
 Definition Y : string := "Y".
 
-Check <{ X + (3 % nat) }>.
-
 Example aexp1 :
     aeval (X !-> 5%nat; Y !-> 3%nat ; _ !-> 0%nat) <{ X + (3 % nat) - Y }> = 5%nat.
 Proof. reflexivity. Qed.
@@ -19,24 +17,30 @@ Example bexp1 :
     beval (X !-> 5%nat; Y !-> 3%nat ; _ !-> 0%nat) <{ Y <= X }> = true.
 Proof. reflexivity. Qed.
 
-Check H.
-
 Example state1:
-  ApplyOneQubitGate 0%nat 0%nat H = H.
+  padding 2%nat 0%nat H = I 2 ⊗ (I 2 ⊗ H).
 Proof.
   reflexivity.
 Qed.
 
 Example state2:
-  ApplyOneQubitGate 0%nat 0%nat CNOT = CNOT.
+  padding 2%nat 1%nat H = I 2 ⊗ (H ⊗ I 2).
 Proof.
   reflexivity.
 Qed.
 
 Example state3:
-  ApplyOneQubitGate 1%nat 0%nat H = H.
+padding 0%nat 0%nat CNOT = CNOT.
 Proof.
-Admitted.
+  reflexivity.
+Qed.
+
+Example state4:
+padding 1%nat 0%nat H = I 2 ⊗ H.
+Proof.
+  reflexivity.
+Qed.
+
 
 Definition assert : Assertion 2 := fun (tmn: total_map nat) => pair <{ X <= (2 % nat) }> H.
 
@@ -75,19 +79,30 @@ Admitted.
 
 Definition Prog1 : com :=
   <{ new_qubit;
-     q 0 *= GH;
-     X :=meas 0 }>.
+    q 0 *= GH;
+     X :=meas 0;
+     skip
+  }>.
 Print Prog1.
 
-Theorem state_eval_1: ceval Prog1 [((_ !-> 0%nat), I 0)] [((X !-> 0%nat ; _ !-> 1%nat), H) ; ((X !-> 1%nat; _ !-> 1%nat), H)].
+Check ∣0⟩⟨0∣ × (H × ∣0⟩⟨0∣ × (H) †) × (∣0⟩⟨0∣) †.
+
+Theorem state_eval_1: ceval 0%nat 1%nat Prog1
+ [((_ !-> 0%nat), I 0)] 
+ [(X !-> 0%nat; _ !-> 0%nat, ∣0⟩⟨0∣ × (H × ∣0⟩⟨0∣ × (H) †) × (∣0⟩⟨0∣) †);
+ (X !-> 1%nat; _ !-> 0%nat, ∣1⟩⟨1∣ × (H × ∣0⟩⟨0∣ × (H) †) × (∣1⟩⟨1∣) †)].
 Proof.
   eapply E_Seq.
-  apply E_Init.
+  eapply E_Init.
+  simpl.
   eapply E_Seq.
   apply E_AppOne.
-Admitted.
-
-
+  simpl.
+  eapply E_Seq.
+  apply E_Meas.
+  simpl.
+  apply E_Skip.
+Qed.
 (* ENONTRA BOM EXEMPLOS PARA APRESENTAÇÃO*)
 (* () -> ∣0⟩⟨0∣ . I *)
 (* 
@@ -112,37 +127,39 @@ Definition Prog3 : com :=
   <{ new_qubit;
      q 0 *= GH }>.
 
-Theorem state_eval_3: ceval Prog3 [((_ !-> 0%nat), I 2)] [((_ !-> 0%nat), H ⊗ ∣0⟩⟨0∣ ⊗ H†)].
+Theorem state_eval_3: ceval 0%nat 1%nat Prog3 [((_ !-> 0%nat), I 2)] [((_ !-> 0%nat), H × ∣0⟩⟨0∣ × H†)].
 Proof.
   eapply E_Seq.
-  - apply E_Init.
-  - unfold UpdateStateInit. simpl.
-Admitted.
+  apply E_Init.
+  simpl.
+  apply E_AppOne.
+Qed.
 
 Definition Prog4 : com :=
   <{ new_qubit }>.
 
 Definition Prog5 : com :=
-  <{ X := (2 % nat);
-    new_qubit;
+  <{
+    new_qubit; 
+    X := (2 % nat);
     if X == (2 % nat) then
        q 0 *= GH
     else
        q 0 *= GX
     end}>.
 
-Theorem state_eval_5: ceval Prog5 [((_ !-> 0%nat), I 2%nat)] [((X !-> 2%nat; _ !-> 0%nat), H × ∣0⟩⟨0∣ × H†)].
+Theorem state_eval_5: ceval 0%nat 1%nat Prog5 [((_ !-> 0%nat), I 1%nat)] [((X !-> 2%nat; _ !-> 0%nat), H × ∣0⟩⟨0∣ × H†)].
 Proof.
   eapply E_Seq.
-  apply E_Ass.
-  eapply E_Seq.
-  apply E_Init.
-  apply E_IfFalse.
+  eapply E_Init.
   simpl.
-  (* there is a problem here*)
-  (* eapply E_AppOne. *)
-Abort.
-
+  eapply E_Seq.
+  eapply E_Ass.
+  simpl.
+  apply E_IfTrue.
+  simpl.
+  eapply E_AppOne.
+Qed.
 
 
 

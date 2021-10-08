@@ -64,7 +64,7 @@ Definition GROVER : com :=
 
 Print GROVER.
 
-Theorem final_state: ceval GROVER [(( _ !-> 0%nat), I 1)] [(( X !-> 3%nat ; K !-> 3%nat ; Y0 !-> 0%nat ; Y1 !-> 0%nat ;Y2 !-> 1%nat; _ !-> 0%nat), ∣0⟩⟨0∣ )] .
+Theorem final_state: ceval 0%nat 3%nat GROVER [(( _ !-> 0%nat), I 1)] [(( X !-> 3%nat ; K !-> 3%nat ; Y0 !-> 0%nat ; Y1 !-> 0%nat ;Y2 !-> 1%nat; _ !-> 0%nat), ∣0⟩⟨0∣ )] .
 Proof.
   eapply E_Seq.
   apply E_Init.
@@ -72,21 +72,6 @@ Proof.
   apply E_Init.
   eapply E_Seq.
   apply E_Init.
-  eapply E_Seq.
-  apply E_AppOne.
-  simpl.
-  eapply E_Seq.
-  apply E_AppOne.
-  simpl.
-  eapply E_Seq.
-  apply E_AppOne.
-  simpl.
-  eapply E_Seq.
-  apply E_Ass.
-  simpl.
-  eapply E_Seq.
-  apply E_Ass.
-  simpl.
   eapply E_Seq.
   (* there is a problem *)
 Admitted.

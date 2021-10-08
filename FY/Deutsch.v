@@ -16,7 +16,7 @@ Definition DJ : com :=
 
 Print DJ.
 
-Theorem final_state: ceval DJ [(( _ !-> 0%nat), I 1)] [(( _ !-> 0%nat), I 1)] .
+Theorem final_state: ceval 0%nat 0%nat DJ [(( _ !-> 0%nat), I 1)] [(( _ !-> 0%nat), I 1)] .
 Proof.
 Admitted.
 

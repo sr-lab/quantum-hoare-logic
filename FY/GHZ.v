@@ -24,9 +24,15 @@ Definition GHZ : com :=
 
 Print GHZ.
 
-Theorem final_state: ceval GHZ [(( _ !-> 0%nat), I 1)] 
-  [(( X0 !-> 0%nat; X1 !-> 0%nat; X2 !-> 0%nat; _ !-> 0%nat), I 3); 
-   (( X0 !-> 1%nat; X1 !-> 1%nat; X2 !-> 1%nat; _ !-> 0%nat), I 3)].
+Theorem final_state: ceval 0%nat 3%nat GHZ [(( _ !-> 0%nat), I 1)] 
+[(X2 !-> 0%nat; X1 !-> 0%nat; X0 !-> 0%nat; _ !-> 0%nat, I 2 ⊗ (∣0⟩⟨0∣ ⊗ I 2) × (I 2 ⊗ (I 2 ⊗ ∣0⟩⟨0∣) × (CNOT ⊗ I 2 × (I 2 ⊗ CNOT × (I 2 ⊗ (I 2 ⊗ H) × (∣ 0 ⟩ ⊗ (∣ 0 ⟩ ⊗ ∣0⟩⟨0∣ ⊗ ⟨0∣) ⊗ ⟨0∣) × (I 2 ⊗ (I 2 ⊗ H)) †) × (I 2 ⊗ CNOT) †) × (CNOT ⊗ I 2) †) × (I 2 ⊗ (I 2 ⊗ ∣0⟩⟨0∣)) †) × (I 2 ⊗ (∣0⟩⟨0∣ ⊗ I 2)) †);
+ (X2 !-> 1%nat; X1 !-> 0%nat; X0 !-> 0%nat; _ !-> 0%nat, I 2 ⊗ (∣0⟩⟨0∣ ⊗ I 2) × (I 2 ⊗ (I 2 ⊗ ∣0⟩⟨0∣) × (CNOT ⊗ I 2 × (I 2 ⊗ CNOT × (I 2 ⊗ (I 2 ⊗ H) × (∣ 0 ⟩ ⊗ (∣ 0 ⟩ ⊗ ∣0⟩⟨0∣ ⊗ ⟨0∣) ⊗ ⟨0∣) × (I 2 ⊗ (I 2 ⊗ H)) †) × (I 2 ⊗ CNOT) †) × (CNOT ⊗ I 2) †) × (I 2 ⊗ (I 2 ⊗ ∣0⟩⟨0∣)) †) × (I 2 ⊗ (∣0⟩⟨0∣ ⊗ I 2)) †);
+ (X2 !-> 0%nat; X1 !-> 1%nat; X0 !-> 0%nat; _ !-> 0%nat, I 2 ⊗ (∣0⟩⟨0∣ ⊗ I 2) × (I 2 ⊗ (I 2 ⊗ ∣0⟩⟨0∣) × (CNOT ⊗ I 2 × (I 2 ⊗ CNOT × (I 2 ⊗ (I 2 ⊗ H) × (∣ 0 ⟩ ⊗ (∣ 0 ⟩ ⊗ ∣0⟩⟨0∣ ⊗ ⟨0∣) ⊗ ⟨0∣) × (I 2 ⊗ (I 2 ⊗ H)) †) × (I 2 ⊗ CNOT) †) × (CNOT ⊗ I 2) †) × (I 2 ⊗ (I 2 ⊗ ∣0⟩⟨0∣)) †) × (I 2 ⊗ (∣0⟩⟨0∣ ⊗ I 2)) †);
+ (X2 !-> 1%nat; X1 !-> 1%nat; X0 !-> 0%nat; _ !-> 0%nat, I 2 ⊗ (∣0⟩⟨0∣ ⊗ I 2) × (I 2 ⊗ (I 2 ⊗ ∣0⟩⟨0∣) × (CNOT ⊗ I 2 × (I 2 ⊗ CNOT × (I 2 ⊗ (I 2 ⊗ H) × (∣ 0 ⟩ ⊗ (∣ 0 ⟩ ⊗ ∣0⟩⟨0∣ ⊗ ⟨0∣) ⊗ ⟨0∣) × (I 2 ⊗ (I 2 ⊗ H)) †) × (I 2 ⊗ CNOT) †) × (CNOT ⊗ I 2) †) × (I 2 ⊗ (I 2 ⊗ ∣0⟩⟨0∣)) †) × (I 2 ⊗ (∣0⟩⟨0∣ ⊗ I 2)) †);
+ (X2 !-> 0%nat; X1 !-> 0%nat; X0 !-> 1%nat; _ !-> 0%nat, I 2 ⊗ (∣0⟩⟨0∣ ⊗ I 2) × (I 2 ⊗ (I 2 ⊗ ∣0⟩⟨0∣) × (CNOT ⊗ I 2 × (I 2 ⊗ CNOT × (I 2 ⊗ (I 2 ⊗ H) × (∣ 0 ⟩ ⊗ (∣ 0 ⟩ ⊗ ∣0⟩⟨0∣ ⊗ ⟨0∣) ⊗ ⟨0∣) × (I 2 ⊗ (I 2 ⊗ H)) †) × (I 2 ⊗ CNOT) †) × (CNOT ⊗ I 2) †) × (I 2 ⊗ (I 2 ⊗ ∣0⟩⟨0∣)) †) × (I 2 ⊗ (∣0⟩⟨0∣ ⊗ I 2)) †);
+ (X2 !-> 1%nat; X1 !-> 0%nat; X0 !-> 1%nat; _ !-> 0%nat, I 2 ⊗ (∣0⟩⟨0∣ ⊗ I 2) × (I 2 ⊗ (I 2 ⊗ ∣0⟩⟨0∣) × (CNOT ⊗ I 2 × (I 2 ⊗ CNOT × (I 2 ⊗ (I 2 ⊗ H) × (∣ 0 ⟩ ⊗ (∣ 0 ⟩ ⊗ ∣0⟩⟨0∣ ⊗ ⟨0∣) ⊗ ⟨0∣) × (I 2 ⊗ (I 2 ⊗ H)) †) × (I 2 ⊗ CNOT) †) × (CNOT ⊗ I 2) †) × (I 2 ⊗ (I 2 ⊗ ∣0⟩⟨0∣)) †) × (I 2 ⊗ (∣0⟩⟨0∣ ⊗ I 2)) †);
+ (X2 !-> 0%nat; X1 !-> 1%nat; X0 !-> 1%nat; _ !-> 0%nat, I 2 ⊗ (∣0⟩⟨0∣ ⊗ I 2) × (I 2 ⊗ (I 2 ⊗ ∣0⟩⟨0∣) × (CNOT ⊗ I 2 × (I 2 ⊗ CNOT × (I 2 ⊗ (I 2 ⊗ H) × (∣ 0 ⟩ ⊗ (∣ 0 ⟩ ⊗ ∣0⟩⟨0∣ ⊗ ⟨0∣) ⊗ ⟨0∣) × (I 2 ⊗ (I 2 ⊗ H)) †) × (I 2 ⊗ CNOT) †) × (CNOT ⊗ I 2) †) × (I 2 ⊗ (I 2 ⊗ ∣0⟩⟨0∣)) †) × (I 2 ⊗ (∣0⟩⟨0∣ ⊗ I 2)) †);
+ (X2 !-> 1%nat; X1 !-> 1%nat; X0 !-> 1%nat; _ !-> 0%nat, I 2 ⊗ (∣0⟩⟨0∣ ⊗ I 2) × (I 2 ⊗ (I 2 ⊗ ∣0⟩⟨0∣) × (CNOT ⊗ I 2 × (I 2 ⊗ CNOT × (I 2 ⊗ (I 2 ⊗ H) × (∣ 0 ⟩ ⊗ (∣ 0 ⟩ ⊗ ∣0⟩⟨0∣ ⊗ ⟨0∣) ⊗ ⟨0∣) × (I 2 ⊗ (I 2 ⊗ H)) †) × (I 2 ⊗ CNOT) †) × (CNOT ⊗ I 2) †) × (I 2 ⊗ (I 2 ⊗ ∣0⟩⟨0∣)) †) × (I 2 ⊗ (∣0⟩⟨0∣ ⊗ I 2)) †)].
 Proof. 
   eapply E_Seq.
   apply E_Init.
@@ -38,20 +44,22 @@ Proof.
   apply E_Init.
   simpl.
   eapply E_Seq.
-  apply E_AppOne.
+  eapply E_AppOne.
   simpl.
   eapply E_Seq.
-  apply E_AppTwo.
+  eapply E_AppTwo.
   simpl.
   eapply E_Seq.
-  apply E_AppTwo.
+  eapply E_AppTwo.
   simpl.
   eapply E_Seq.
-  apply E_Meas.
+  eapply E_Meas.
   simpl.
   eapply E_Seq.
-  apply E_Meas.
+  eapply E_Meas.
   simpl.
+  (*eapply E_Meas.
+  simpl.*)
 Abort.
 
 (* TODO : Swap gate+no cloning*)

@@ -14,8 +14,8 @@ Definition TELEPORT : com :=
   <{ 
      new_qubit;
      new_qubit;
-     new_qubit;
      q 1 *= GH;
+     new_qubit;
      q 1 2 *= GCNOT;
      q 0 1 *= GCNOT;
      q 0 *= GH;
@@ -31,8 +31,8 @@ Definition TELEPORT : com :=
 
 Print TELEPORT.
 
-Theorem final_state: ceval TELEPORT 
-[(( _ !-> 0%nat), I 1)] [(( _ !-> 0%nat), I 1)] .
+Theorem final_state: ceval 0%nat 3%nat TELEPORT 
+[(( _ !-> 0%nat), I 1) ] [(( _ !-> 0%nat), I 1)] .
 Proof.
     eapply E_Seq.
     apply E_Init.
@@ -41,30 +41,7 @@ Proof.
     apply E_Init.
     simpl.
     eapply E_Seq.
-    apply E_Init.
-    simpl.
-    eapply E_Seq.
-    apply E_AppOne.
-    simpl.
-    eapply E_Seq.
-    apply E_AppTwo.
-    simpl.
-    eapply E_Seq.
-    apply E_AppTwo.
-    simpl.
-    eapply E_Seq.
-    apply E_AppOne.
-    simpl.
-    eapply E_Seq.
-    apply E_Meas.
-    simpl.
-    eapply E_Seq.
-    apply E_Meas.
-    simpl.
-    eapply E_IfTrue.
-    simpl.
-    eapply E_IfTrue.
-    simpl.
+    
     (* there is a problem *)
 Admitted.
 
