@@ -18,13 +18,14 @@ Example bexp1 :
 Proof. reflexivity. Qed.
 
 Example state1:
-  padding 2%nat 0%nat H = I 2 ⊗ (I 2 ⊗ H).
+  padding 2%nat 0%nat H = H ⊗ (I 2) ⊗ (I 2).
 Proof.
+  simpl.
   reflexivity.
 Qed.
 
 Example state2:
-  padding 2%nat 1%nat H = I 2 ⊗ (H ⊗ I 2).
+  padding 2%nat 1%nat H = I 2 ⊗ H ⊗ I 2.
 Proof.
   reflexivity.
 Qed.
@@ -36,16 +37,17 @@ Proof.
 Qed.
 
 Example state4:
-padding 1%nat 0%nat H = I 2 ⊗ H.
+padding 1%nat 0%nat H = H ⊗ I 2.
 Proof.
   reflexivity.
 Qed.
 
-
-Definition assert : Assertion 2 := fun (tmn: total_map nat) => pair <{ X <= (2 % nat) }> H.
-
-Example satisfied: beval (X !-> 0%nat; _ !-> 1%nat) (fst (assert (X !-> 0%nat; _ !-> 1%nat))) = true.
-Proof. auto. Qed.
+Example state5:
+GetMeasurementBasis 1%nat 1%nat true = I 2 ⊗ ∣0⟩⟨0∣.
+Proof.
+  simpl.
+  reflexivity.
+Qed.
 
 Lemma HI0 : H ⊗ I 0 = H.
 Proof.
@@ -62,20 +64,31 @@ Proof.
   unfold Mmult.
   simpl.
   unfold Cplus.
-  simpl.
 Admitted.
 
+Definition assert2 : Assertion 2 := pair <{ X <= (3 % nat) }> H.
 
-Example expect: (Expectation 2 2 [((X !-> 0%nat; _ !-> 1%nat), H)] assert) = 1.
+Definition st2 : (total_map nat) * (Unitary 2) := 
+  ((X !-> 1%nat; _ !-> 0%nat), H).
+
+Definition r: C := trace ((kron H (I 2)) × (kron H H)).
+
+Theorem ex: (fst (trace (Mmult (kron (snd st2) (I (2 - 2))) 
+(snd assert2)))) = 0%R.
 Proof.
   simpl.
-  rewrite HI0.
-  rewrite SC0.
-  (*There is a problem here*)
-  (*rewrite HHI.
-  auto.*)
 Admitted.
 
+Example expect: (Expectation 2 2 [((X !-> 1%nat; _ !-> 0%nat), H)] assert2) = 2%R.
+Proof.
+  simpl.
+  repeat (
+  try field_simplify ;
+  try rewrite pow2_sqrt;
+  try rewrite pown_sqrt;
+  try lra;
+  try apply sqrt_neq_0_compat).
+Qed.
 
 Definition Prog1 : com :=
   <{ new_qubit;
@@ -84,9 +97,7 @@ Definition Prog1 : com :=
      skip
   }>.
 Print Prog1.
-
-Check ∣0⟩⟨0∣ × (H × ∣0⟩⟨0∣ × (H) †) × (∣0⟩⟨0∣) †.
-
+ 
 Theorem state_eval_1: ceval 0%nat 1%nat Prog1
  [((_ !-> 0%nat), I 0)] 
  [(X !-> 0%nat; _ !-> 0%nat, ∣0⟩⟨0∣ × (H × ∣0⟩⟨0∣ × (H) †) × (∣0⟩⟨0∣) †);
@@ -103,6 +114,37 @@ Proof.
   simpl.
   apply E_Skip.
 Qed.
+
+Example props: (⟨0∣ × (∣0⟩⟨0∣ × (H × ∣0⟩⟨0∣ × (H) †) × (∣0⟩⟨0∣) †) × ∣0⟩) 0%nat 0%nat = 1.
+Proof.
+  unfold H, Mmult, qubit0, qubit1, adjoint; simpl.
+  C_field_simplify; simpl.
+  rewrite Cconj_R.
+  field_simplify.
+  rewrite Cconj_R.
+  field_simplify.
+  rewrite Cconj_rad2.
+  rewrite Cplus_0_l.
+  field_simplify.
+  unfold Cmult.
+  simpl.
+  rewrite Cplus_0_l.
+  rewrite Rmult_0_r.
+  rewrite Rmult_1_r.
+  rewrite Rmult_0_r.
+  rewrite Rmult_0_l.
+  rewrite Rplus_0_r.
+  unfold Rminus.
+  rewrite Ropp_0.
+  rewrite Rplus_0_r.
+  unfold Cplus.
+  simpl.
+  rewrite Ropp_0.
+  rewrite Rplus_0_r.
+  rewrite Rplus_0_r.
+  unfold RtoC.
+  unfold Cdiv.
+Admitted.
 (* ENONTRA BOM EXEMPLOS PARA APRESENTAÇÃO*)
 (* () -> ∣0⟩⟨0∣ . I *)
 (* 
@@ -146,9 +188,18 @@ Definition Prog5 : com :=
        q 0 *= GH
     else
        q 0 *= GX
-    end}>.
+    end;
+    Y :=meas 0
+    }>.
 
-Theorem state_eval_5: ceval 0%nat 1%nat Prog5 [((_ !-> 0%nat), I 1%nat)] [((X !-> 2%nat; _ !-> 0%nat), H × ∣0⟩⟨0∣ × H†)].
+Theorem matrix_1: ∣0⟩⟨0∣ × (H × ∣0⟩⟨0∣ × (H) †) × (∣0⟩⟨0∣) † = l2M [[1;0];[0;0]].
+Proof.
+Admitted.
+
+
+Theorem state_eval_5: ceval 0%nat 1%nat Prog5 [((_ !-> 0%nat), I 1%nat)] 
+[(Y !-> 0%nat; X !-> 2%nat; _ !-> 0%nat, ∣0⟩⟨0∣ × (H × ∣0⟩⟨0∣ × (H) †) × (∣0⟩⟨0∣) †);
+ (Y !-> 1%nat; X !-> 2%nat; _ !-> 0%nat, ∣1⟩⟨1∣ × (H × ∣0⟩⟨0∣ × (H) †) × (∣1⟩⟨1∣) †)].
 Proof.
   eapply E_Seq.
   eapply E_Init.
@@ -156,9 +207,12 @@ Proof.
   eapply E_Seq.
   eapply E_Ass.
   simpl.
+  eapply E_Seq.
   apply E_IfTrue.
   simpl.
   eapply E_AppOne.
+  simpl.
+  eapply E_Meas.
 Qed.
 
 

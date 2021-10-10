@@ -9,7 +9,7 @@ Definition t_empty {A : Type} (v : A) : total_map A :=
   (fun _ => v).
 
 Definition t_update {A : Type} (m : total_map A)
-  (x : string) (v : A) := fun x' => if eqb_string x x' then v else m x'.
+  (x : string) (v : A) := fun x' => if string_dec x x' then v else m x'.
 
 Notation "'_' '!->' v" := (t_empty v)
   (at level 100, right associativity).
