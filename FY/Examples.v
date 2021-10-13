@@ -66,20 +66,11 @@ Proof.
   unfold Cplus.
 Admitted.
 
-Definition assert2 : Assertion 2 := pair <{ X <= (3 % nat) }> H.
+Definition assert2 : Assertion 2 := fun st => pair <{ X <= (3 % nat) }> H.
 
-Definition st2 : (total_map nat) * (Unitary 2) := 
-  ((X !-> 1%nat; _ !-> 0%nat), H).
+Definition st2 := [(X !-> 1%nat; _ !-> 0%nat, H)].
 
-Definition r: C := trace ((kron H (I 2)) × (kron H H)).
-
-Theorem ex: (fst (trace (Mmult (kron (snd st2) (I (2 - 2))) 
-(snd assert2)))) = 0%R.
-Proof.
-  simpl.
-Admitted.
-
-Example expect: (Expectation 2 2 [((X !-> 1%nat; _ !-> 0%nat), H)] assert2) = 2%R.
+Example expect: (Expectation 2 2 st2 (assert2 st2)) = 2%R.
 Proof.
   simpl.
   repeat (

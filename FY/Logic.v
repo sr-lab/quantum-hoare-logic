@@ -14,7 +14,7 @@ Definition hoare_triple
     (Q : Assertion nq) : Prop :=
     forall ns1 ns2 (st1: list (total_map nat * Unitary ns1)) (st2: list (total_map nat * Unitary ns2)), 
     ceval ns1 ns2 c st1 st2 ->
-    (Expectation ns1 np st1 P) <= (Expectation ns2 nq st2 Q).
+    (Expectation ns1 np st1 (P st1)) <= (Expectation ns2 nq st2 (Q st2)).
 
 Theorem fy_skip: forall n P, hoare_triple n n P <{skip}> P.
 Proof.
@@ -26,15 +26,6 @@ Proof.
     right.
     exact (eq_refl).
 Qed.
-
-Definition init_sub n (P : Assertion n) : Assertion (n - 1) := 
-    pair (fst P) ( ( ⟨0∣ ⊗ (I (2 ^n))) × (snd P) × (∣0⟩ ⊗ (I (2 ^n)))).
-
-Definition apply_sub n (U: Unitary n) (P : Assertion n) : Assertion n :=
-    pair (fst P) (Mmult (Mmult U† (snd P)) U).
-
-Definition apply_boolean n (b: bool_exp) (P : Assertion n) : Assertion n :=
-    pair (BAnd (fst P) b) (snd P).
 
 Axiom Rlt_trans_eq : forall r1 r2 r3 : R, r1 <= r2 -> r2 <= r3 -> r1 <= r3.
 
@@ -54,9 +45,20 @@ Proof.
     apply H9.
 Qed.
 
-(*Todo*)
+Check UpdateStateAssign. 
+
+Theorem updateAsgnProp: forall n st l x e,
+UpdateStateAssign n (st :: l) x e = 
+(pair (x !-> (aeval (fst st) e); fst st) (snd st)) :: (UpdateStateAssign n l x e).
+Proof.
+    intros.
+    simpl.
+    reflexivity.
+Qed.
+
+
 Theorem fy_assign: forall n x e P, 
-    hoare_triple n n P <{ x := e }> P.
+    hoare_triple n n (fun st => P (UpdateStateAssign n st x e)) <{ x := e }> P.
 Proof.
     unfold hoare_triple.
     intros.
@@ -64,18 +66,19 @@ Proof.
     subst.
     induction st1.
     - simpl. lra.
-    - simpl in H. 
+    - destruct IHst1.
+      eapply E_Ass. 
 Admitted.
 
 Theorem fy_if: forall (n: nat) (b: bool_exp) (c1 c2: com) P Q, 
-    hoare_triple n n (apply_boolean n b P) c1 Q ->
-    hoare_triple n n (apply_boolean n <{ ~ b }> P) c2 Q ->
+    hoare_triple n n (fun st => P (Filter n st b)) c1 Q ->
+    hoare_triple n n (fun st => P (FilterNeg n st b)) c2 Q ->
     hoare_triple n n P <{ if b then c1 else c2 end }> Q.
 Proof.
     unfold hoare_triple.
     intros.
     inversion H1.
-    subst.
+    subst.  
 Admitted.
 
 Theorem updateStateInitProp: forall n a st, 
@@ -107,15 +110,7 @@ Proof.
       + apply E_Init.
       + rewrite -> expectation_sum.
       destruct (ns1 =? n) eqn:nnn.
-        * left. eapply Rlt_trans. eapply Rplus_lt_compat_l. apply H0. 
-          admit.
-        * left. eapply Rlt_trans. eapply Rplus_lt_compat_l. apply H0. 
-          admit.
-        * simpl. admit.
-      + rewrite -> expectation_sum. destruct (ns1 =? n) eqn:nnn.
-        * right. rewrite H0. admit.
-        * right. rewrite H0. admit.
-        * simpl. admit. 
+        * left. eapply Rlt_trans. eapply Rplus_lt_compat_l.
 Admitted.
 
 Theorem fy_apply: forall n m G P, 
@@ -129,7 +124,6 @@ Proof.
     - simpl. lra.
     - destruct IHst1.
       + eapply E_AppOne.
-      + admit.   
 Admitted.
 
 (*TODO*)
@@ -139,8 +133,8 @@ Proof.
 Admitted.
 
 Theorem fy_while: forall n b c P,
-    hoare_triple n n (apply_boolean n b P) c P ->
-    hoare_triple n n P <{ while b do c end }> (apply_boolean n <{ ~ b }> P).
+    hoare_triple n n (fun st => P (Filter n st b)) c P ->
+    hoare_triple n n P <{ while b do c end }> (fun st => P (FilterNeg n st b)).
 Proof.
 Admitted.
 

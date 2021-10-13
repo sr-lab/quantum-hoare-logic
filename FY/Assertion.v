@@ -5,11 +5,23 @@ From FY Require Export Utils.
 From FY Require Export State.
 Import ListNotations.
 
-Definition Assertion (n : nat) : Type := bool_exp * (Unitary n).
+Definition Assertion (n: nat) : Type := (list ((total_map nat) * (Unitary n))) -> (bool_exp * (Unitary n)).
+
+Definition PropOf {n: nat} (a: Assertion n)
+  (st: list ((total_map nat) * (Unitary n))) := fst (a st).
+
+Definition DensityOf {n: nat} (a: Assertion n)
+  (st: list ((total_map nat) * (Unitary n))) := snd (a st).
+
+Definition init_sub (n: nat) (P : Assertion n) : Assertion (n - 1) := 
+    fun st => (pair (PropOf P st) (( ⟨0∣ ⊗ (I (2 ^n))) × (DensityOf P st) × (∣0⟩ ⊗ (I (2 ^n))))).
+
+Definition apply_sub n (U: Unitary n) (P : Assertion n) : Assertion n :=
+  fun st => (pair (PropOf P st) (U† × (DensityOf P st) × U)). 
 
 Fixpoint Expectation (ns na : nat) 
      (state: list ((total_map nat) * (Unitary ns)))
-     (assert: Assertion na) : R :=
+     (assert: (bool_exp * (Unitary na))) : R :=
     match state with
     | [] => 0%R
     | st :: l => 
@@ -47,8 +59,8 @@ Definition weaker (ns na1 na2 : nat)
     (state: list ((total_map nat)*(Unitary ns))) 
     (assert1: Assertion na1) 
     (assert2: Assertion na2) : Prop :=
-      (Expectation ns na1 state assert1) 
-      <= (Expectation ns na2 state assert2).
+      (Expectation ns na1 state (assert1 state)) 
+      <= (Expectation ns na2 state (assert1 state)).
 (*
 Definition Satisfies (n: nat) 
     (state: (total_map nat) * (Unitary (2^n))) (assertion: Assertion n) : bool :=
