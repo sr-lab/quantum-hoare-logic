@@ -206,7 +206,22 @@ Proof.
   eapply E_Meas.
 Qed.
 
+Theorem order: forall a b c: nat, (a <=? b) = true -> (b <=? c) = true -> (a <=? c) = true.
+Proof.
+Admitted.
 
+Theorem imp1: classicalPropsImp 2 2 (fun st => (<{ X <= (3 % nat)}>, I 2)) (fun st => (<{ X <= (4 % nat)}>, I 2)).
+Proof.
+    unfold classicalPropsImp.
+    intros.
+    simpl.
+    simpl in H.
+    assert (H3: (3%nat <=? 4%nat) = true).
+    simpl. reflexivity.
+    eapply order.
+    apply H.
+    apply H3.
+Qed.
 
 
 

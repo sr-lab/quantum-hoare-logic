@@ -67,7 +67,7 @@ Proof.
     induction st1.
     - simpl. lra.
     - destruct IHst1.
-      eapply E_Ass. 
+      + eapply E_Ass.     
 Admitted.
 
 Theorem fy_if: forall (n: nat) (b: bool_exp) (c1 c2: com) P Q, 
@@ -91,12 +91,6 @@ Proof.
     exact (eq_refl).
 Qed.
 
-Theorem cvalInit: forall n a st, ceval n (n + 1) <{ new_qubit }> (a :: st)
-(UpdateStateInit n (a :: st)) .
-Proof.
-    intros.
-Abort.
-
 Theorem fy_init: forall n P, 
     hoare_triple n n (init_sub n P) <{ new_qubit }> P.
 Proof.
@@ -104,13 +98,14 @@ Proof.
     intros.
     inversion H.
     subst.
+    right.
     induction st1.
     - simpl. lra. 
     - destruct IHst1.
       + apply E_Init.
-      + rewrite -> expectation_sum.
+      + destruct (beval (fst a) (fst (init_sub n P (a :: st1)))) eqn:bev1.
+        * rewrite expectation_sum.
       destruct (ns1 =? n) eqn:nnn.
-        * left. eapply Rlt_trans. eapply Rplus_lt_compat_l.
 Admitted.
 
 Theorem fy_apply: forall n m G P, 
@@ -152,6 +147,18 @@ Proof.
     eapply Rlt_trans_eq.
 Admitted.
 
+Definition classicalPropsImp (np nq: nat)(P : Assertion np)
+  (Q : Assertion nq) : Prop := forall st sts, beval st (fst (P sts)) = true ->
+  beval st (fst (Q sts)) = true .
+
+Theorem fy_imp: forall n c P Q P',
+    hoare_triple n n P c Q ->
+    classicalPropsImp n n P Q ->
+    hoare_triple n n P' c Q.
+Proof.
+    unfold hoare_triple, classicalPropsImp.
+    intros.
+Admitted.
 
 
  

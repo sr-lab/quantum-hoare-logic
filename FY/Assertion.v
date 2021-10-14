@@ -61,6 +61,7 @@ Definition weaker (ns na1 na2 : nat)
     (assert2: Assertion na2) : Prop :=
       (Expectation ns na1 state (assert1 state)) 
       <= (Expectation ns na2 state (assert1 state)).
+
 (*
 Definition Satisfies (n: nat) 
     (state: (total_map nat) * (Unitary (2^n))) (assertion: Assertion n) : bool :=
