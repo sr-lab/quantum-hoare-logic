@@ -1,4 +1,6 @@
 Require Export Coq.Strings.String.
+Require Export Coq.Bool.Bool.
+Require Import Arith.
 
 Definition eqb_string (x y : string) : bool :=
   if string_dec x y then true else false.
@@ -16,6 +18,10 @@ Notation "'_' '!->' v" := (t_empty v)
 
 Notation "x '!->' v ';' m" := (t_update m x v)
   (at level 100, v at next level, right associativity).
+
+Definition mergeMaps (mp1: total_map nat) 
+(mp2: total_map nat):= fun (e: string) => 
+  if (andb (negb ((mp1 e) =? (mp2 e))) (negb ((mp1 e) =? 0%nat))) then (mp1 e) else (mp2 e).
 
 (* --- Real Numbers *)
 
@@ -656,7 +662,6 @@ Opaque C.
 
 Require Import Psatz.
 Require Import Setoid.
-Require Import Arith.
 Require Import Bool.
 Require Import Program.
 Require Import List.

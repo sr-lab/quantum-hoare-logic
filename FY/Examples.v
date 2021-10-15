@@ -5,6 +5,7 @@ From FY Require Export Utils.
 From FY Require Export Syntax.
 From FY Require Export Semantics.
 From FY Require Export Assertion.
+From FY Require Export Logic.
 
 Definition X : string := "X".
 Definition Y : string := "Y".
@@ -66,11 +67,11 @@ Proof.
   unfold Cplus.
 Admitted.
 
-Definition assert2 : Assertion 2 := fun st => pair <{ X <= (3 % nat) }> H.
+Definition assert2 : Assertion 2 := pair (_ !-> 0%nat) (pair <{ X <= (3 % nat) }> H).
 
 Definition st2 := [(X !-> 1%nat; _ !-> 0%nat, H)].
 
-Example expect: (Expectation 2 2 st2 (assert2 st2)) = 2%R.
+Example expect: (Expectation 2 2 st2 (assert2)) = 2%R.
 Proof.
   simpl.
   repeat (
@@ -210,7 +211,9 @@ Theorem order: forall a b c: nat, (a <=? b) = true -> (b <=? c) = true -> (a <=?
 Proof.
 Admitted.
 
-Theorem imp1: classicalPropsImp 2 2 (fun st => (<{ X <= (3 % nat)}>, I 2)) (fun st => (<{ X <= (4 % nat)}>, I 2)).
+Theorem imp1: classicalPropsImp 2 2 
+((_ !-> 0%nat) , (<{ X <= (3 % nat)}>, I 2)) 
+((_ !-> 0%nat) , (<{ X <= (4 % nat)}>, I 2)) .
 Proof.
     unfold classicalPropsImp.
     intros.
@@ -223,5 +226,11 @@ Proof.
     apply H3.
 Qed.
 
-
+Theorem mergeMapsExample: mergeMaps (X !-> 2%nat; _ !-> 0%nat) 
+(X !-> 3%nat; Y !-> 1%nat; _ !-> 0%nat) X = 2%nat.
+Proof.
+    unfold mergeMaps.
+    simpl.
+    reflexivity.
+Qed.
 
