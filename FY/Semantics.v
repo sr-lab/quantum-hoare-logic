@@ -30,12 +30,10 @@ Inductive ceval : nat -> nat -> com
       ceval n n' c1 st st' ->
       ceval n' n'' c2 st' st'' ->
       ceval n n'' <{ c1 ; c2 }> st st''
-  | E_IfTrue : forall n n' st st' b c1 c2,
+  | E_If : forall n n' st st' st'' b c1 c2,
       ceval n n' c1 (Filter n st b) st' ->
-      ceval n n' <{ if b then c1 else c2 end }> st st'
-  | E_IfFalse : forall n n' st st' b c1 c2,
-      ceval  n n' c2 (FilterNeg n st b) st' ->
-      ceval n n' <{ if b then c1 else c2 end }> st st'
+      ceval n n' c2 (Filter n st (BNot b)) st'' ->
+      ceval n n' <{ if b then c1 else c2 end }> st (st' ++ st'')
   | E_WhileTrue : forall n n' st st' st'' b c,
       ceval n n' c (Filter n st b) st' ->
       ceval n n' <{ while b do c end }> (Filter n st b) st' ->

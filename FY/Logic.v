@@ -15,7 +15,7 @@ Definition hoare_triple
     forall ns1 ns2 
     (st1: list (total_map nat * Unitary (2 ^ ns1))) 
     (st2: list (total_map nat * Unitary (2 ^ ns2))), 
-    ceval ns1 ns2 c st1 st2 ->
+    (ceval ns1 ns2 c st1 st2) ->
     (Expectation ns1 np st1 P) 
      <= (Expectation ns2 nq st2 Q).
 
@@ -71,22 +71,6 @@ Proof.
 (* TODO *)
 Admitted.
 
-Theorem equal_evals_asgn: forall n a (P: Assertion n) x e, 
-StateOf P = t_empty 0%nat ->
-beval (mergeMaps (StateOf (AssertPreAsgn P x e)) a) (PropOf (AssertPreAsgn P x e)) = true ->
-beval (mergeMaps (StateOf P) (x !-> aeval a e; a)) (PropOf P) = true.
-Proof.
-    intros.
-    simpl.
-    simpl in H0.
-    assert (prp: (PropOf (AssertPreAsgn P x e) = PropOf P)).
-    unfold AssertPreAsgn, PropOf. simpl. reflexivity.
-    rewrite prp in H0.
-    rewrite H. 
-    rewrite eq_maps.
-    apply H0.
-Qed.
-
 Theorem fy_assign: forall n x e P, 
     StateOf P =  t_empty 0%nat ->
     hoare_triple n n (AssertPreAsgn P x e) <{ x := e }> P.
@@ -131,6 +115,119 @@ Definition AssertPreIfTrue {n} (P: Assertion n) (b: bool_exp)
  : Assertion n := (pair (StateOf P)
  (pair (BAnd b (PropOf P)) (DensityOf P))).
 
+Theorem ifHelper: forall n (P: Assertion n) a b,
+ beval (mergeMaps (StateOf P) a) b = true ->
+ beval (mergeMaps (StateOf P) a) b &&
+ beval (mergeMaps (StateOf P) a) (PropOf P) =
+ beval (mergeMaps (StateOf P) a) (PropOf P)
+.
+Proof.
+     intros. rewrite H. simpl. reflexivity.
+Qed.
+
+Theorem filterTrue : forall n a st b,
+beval (fst a) b = true ->
+(Filter n (a :: st) b) = a :: (Filter n st b).
+Proof.
+    intros.
+    unfold Filter.
+    rewrite H. reflexivity. 
+Qed.
+
+Theorem filterFalse : forall n a st b,
+beval (fst a) b = false ->
+(Filter n (a :: st) b) = (Filter n st b).
+Proof.
+    intros.
+    unfold Filter.
+    rewrite H. reflexivity. 
+Qed.
+
+Theorem bevalMergeTrue: forall a b n (P: Assertion n),
+beval a b = true -> beval (mergeMaps (StateOf P) a) b = true.
+Proof.
+    (* TODO*)
+Admitted.
+
+Theorem bevalMergeFalse: forall a b n (P: Assertion n),
+beval a b = false -> beval (mergeMaps (StateOf P) a) b = false.
+Proof.
+    (* TODO*)
+Admitted.
+
+
+Theorem filterAssertPreIf: forall n ns st b P, 
+Expectation ns n (Filter ns st b) 
+(AssertPreIfTrue P b) = Expectation ns n st P.
+Proof.
+    intros.
+    induction st.
+    auto.
+    (*
+    destruct (beval (fst a) b) eqn:beva.
+    rewrite filterTrue.
+    simpl.
+    replace (DensityOf (AssertPreIfTrue P b)) with (DensityOf P).
+    rewrite ifHelper.
+    rewrite IHst. reflexivity. 
+    apply bevalMergeTrue. apply beva.
+    unfold AssertPreIfTrue, DensityOf. auto. 
+    apply beva.
+    rewrite filterFalse. simpl.
+    rewrite bevalMergeFalse.
+    apply IHst. 
+    *)
+Abort.
+
+Theorem expect_split: forall n ns2 st' st'' P,
+Expectation ns2 n (st' ++ st'') P = 
+Rplus (Expectation ns2 n st' P )
+(Expectation ns2 n st'' P).
+Proof.
+    intros.
+    induction st'. simpl. lra.
+    simpl.
+    destruct (beval (mergeMaps (StateOf P) (fst a)) (PropOf P)) eqn:bev.
+    rewrite IHst'. rewrite Rplus_assoc. reflexivity.
+    rewrite IHst'. reflexivity. 
+Qed.
+
+Theorem sum_expects_filters: forall n ns st b P,
+Rplus (Expectation ns n (Filter ns st b) (AssertPreIfTrue P b))
+(Expectation ns n (Filter ns st <{ ~ b }>) (AssertPreIfTrue P (BNot b)))
+= Expectation ns n st P.
+Proof.
+    intros.
+    induction st.
+    simpl. lra.
+    destruct (beval (fst a) b) eqn:beva.
+    simpl. 
+    rewrite beva.
+    simpl.
+    rewrite ifHelper.
+    replace (Expectation ns n st P) with 
+    (Rplus (Expectation ns n (Filter ns st b) (AssertPreIfTrue P b))
+      (Expectation ns n (Filter ns st <{ ~ b }>) (AssertPreIfTrue P <{ ~ b }>))) 
+    by IHst.
+    simpl.
+    unfold DensityOf, AssertPreIfTrue. simpl.
+    symmetry.
+    unfold DensityOf, AssertPreIfTrue. simpl.
+    destruct (beval (mergeMaps (StateOf P) (fst a)) (PropOf P)) eqn:bevb.
+    field_simplify. lra. lra.
+    apply bevalMergeTrue.
+    apply beva.
+    replace (Filter ns (a :: st) b) with (Filter ns st b).
+    replace (Filter ns (a :: st) (BNot b)) with (a :: Filter ns st (BNot b)).
+    rewrite expectation_sum_true. rewrite Rplus_comm. 
+    field_simplify.
+    symmetry. 
+    symmetry in IHst.
+    (*TODO*)
+Admitted.
+
+Axiom Rplus_lt: forall r1 r2 r3 r4:R, r1 <= r2 -> r3 <= r4 -> r1 + r3 <= r2 + r4.
+
 Theorem fy_if: forall (n: nat) (b: bool_exp) (c1 c2: com) P Q, 
     hoare_triple n n (AssertPreIfTrue P b) c1 Q ->
     hoare_triple n n (AssertPreIfTrue P (BNot b)) c2 Q ->
@@ -139,8 +236,18 @@ Proof.
     unfold hoare_triple.
     intros.
     inversion H1.
-    subst.  
-Admitted.
+    subst.
+    apply H in H9. 
+    apply H0 in H10.
+    assert (Hle: Rplus (Expectation ns1 n (Filter ns1 st1 b) (AssertPreIfTrue P b))
+    (Expectation ns1 n (Filter ns1 st1 <{ ~ b }>) (AssertPreIfTrue P <{ ~ b }>)) 
+    = (Expectation ns1 n st1 P)).
+    apply sum_expects_filters. rewrite <- Hle.
+    rewrite expect_split.
+    apply Rplus_lt.
+    apply H9.
+    apply H10.
+Qed.
 
 Theorem updateStateInitProp: forall n a st, 
    UpdateStateInit n (a :: st) = (if n =? 0
@@ -152,6 +259,14 @@ Proof.
     exact (eq_refl).
 Qed.
 
+Theorem eqaul_traces_init: forall n (U: Unitary (2 ^ n)) (rho:  Unitary (2 ^ (n - 1))),
+trace (rho × (( ⟨0∣ ⊗ (I (2 ^(n - 1)))) × U × (∣0⟩ ⊗ (I (2 ^(n - 1))))))
+= trace ( (∣ 0 ⟩ ⊗ rho ⊗ ⟨0∣) × U ).
+Proof.
+Admitted.
+
+Axiom nateq: forall n m:nat, (n =? m) = true -> n = m.
+
 Theorem fy_init: forall n P, 
     hoare_triple n n (init_sub n P) <{ new_qubit }> P.
 Proof.
@@ -162,19 +277,78 @@ Proof.
     right.
     induction st1.
     - simpl. lra. 
-    - destruct (beval (mergeMaps (StateOf (init_sub n P))
-     (fst a)) (PropOf (init_sub n P))) eqn:beval1. 
-     assert (Heq: Expectation ns1 n st1 (init_sub n P) =
-     Expectation (ns1 + 1) n (UpdateStateInit ns1 st1) P). 
-     apply IHst1. apply E_Init. rewrite expectation_sum_true.
-     unfold init_sub. symmetry. rewrite updateStateInitProp.
-     (* rewrite expectation_sum_true. *) admit. 
-     apply beval1. rewrite expectation_sum_false.
-     assert (Heq2: Expectation ns1 n st1 (init_sub n P) =
-     Expectation (ns1 + 1) n (UpdateStateInit ns1 st1) P).  apply IHst1. 
-     apply E_Init. rewrite Heq2. symmetry.
-      (* rewrite expectation_sum_false. *) admit.
-     apply beval1.
+    - rewrite updateStateInitProp.
+      destruct (ns1 =? 0) eqn:ns10.
+      simpl.
+      unfold init_sub. unfold PropOf. simpl. 
+      symmetry.
+      unfold init_sub. unfold PropOf. simpl.
+      unfold DensityOf. simpl.
+      symmetry.
+      assert (ns1 = 0%nat).
+      apply nateq. apply ns10.
+      rewrite H0. 
+Admitted.
+
+Theorem applyPropCNOT: forall n m a st G,
+G = GCNOT ->
+(UpdateStateApply n (a :: st) m G) =
+(fst a, (padding (n - 2%nat) m (geval G)) 
+× (snd a) 
+× (padding (n - 2%nat) m (geval G))†) 
+:: (UpdateStateApply n st m G).
+Proof.
+    intros.
+    simpl.
+    rewrite H.
+    reflexivity.
+Qed.
+
+Theorem applyPropOracle: forall n m a st G GU,
+G = GOracle m GU  ->
+(UpdateStateApply n (a :: st) m G) =
+(fst a, (padding (n - 3%nat) m (geval G)) 
+× (snd a) 
+× (padding (n - 3%nat) m (geval G))†) 
+:: (UpdateStateApply n st m G).
+Proof.   
+    intros.
+    simpl.
+    rewrite H.
+    reflexivity.
+Qed.
+
+Theorem applyPropOne: forall n m a st G,
+G = GH \/ G = GI \/ G = GX \/ G = GY \/ G = GZ ->
+(UpdateStateApply n (a :: st) m G) =
+(fst a, (padding (n - 1%nat) m (geval G)) 
+× (snd a) 
+× (padding (n - 1%nat) m (geval G))†) 
+:: (UpdateStateApply n st m G).
+Proof.
+    intros.
+    simpl.
+    destruct H. 
+    rewrite H.
+    reflexivity.
+    destruct H. 
+    rewrite H.
+    reflexivity.
+    destruct H. 
+    rewrite H.
+    reflexivity.
+    destruct H. 
+    rewrite H.
+    reflexivity.
+    rewrite H.
+    reflexivity.
+Qed.
+
+Theorem equal_traces_apply: forall rho M U ns m,
+trace (rho × (((M) †) × U × M))
+= trace (((padding (ns - 1) m M) × rho
+ × (padding (ns - 1) m M) †) × U).
+Proof.
 Admitted.
 
 Theorem fy_apply: forall n m G P, 
@@ -184,15 +358,40 @@ Proof.
     intros.
     inversion H.
     subst.
+    right.
     induction st1.
     - simpl. lra.
-    - destruct IHst1.
-      + eapply E_AppOne.
+    - destruct (beval (mergeMaps (StateOf (apply_sub n (geval G) P)) (fst a))
+    (PropOf (apply_sub n (geval G) P))) eqn:bev1. 
+    rewrite expectation_sum_true. 
+    symmetry.
+    destruct G.
+    rewrite applyPropOne.
+    simpl.
+    unfold StateOf, apply_sub, PropOf in bev1. simpl in bev1.
+    assert (bev2: beval (mergeMaps (StateOf P) (fst a)) (PropOf P) = true).
+    unfold PropOf. apply bev1.
+    rewrite bev2.
+    assert (Heq: Expectation ns2 n st1 (apply_sub n (geval GH) P) =
+    Expectation ns2 n (UpdateStateApply ns2 st1 m GH) P).
+    apply IHst1. apply E_AppOne. 
+    assert (HH: geval GH = Utils.H). auto.
+    rewrite HH in Heq. 
+    replace (Expectation ns2 n st1 (apply_sub n Utils.H P) ) 
+    with (Expectation ns2 n (UpdateStateApply ns2 st1 m GH) P) by Heq.
+    symmetry.
+    unfold apply_sub, DensityOf. simpl.
+    destruct (ns2 =? n) eqn:ns2n.
+    assert (TA: (trace (snd a × ((Utils.H) †) × snd (snd P) × Utils.H))
+    = (trace
+    (padding (ns2 - 1) m Utils.H × snd a × (padding (ns2 - 1) m Utils.H) †
+     × snd (snd P)))). 
+    (* rewrite (equal_traces_apply (padding (ns2 - 1) m Utils.H) (snd a) (snd (snd P)) ns2 n). *)
 Admitted.
 
 (*TODO*)
 Theorem fy_measure: forall n x m P, 
-    hoare_triple n n P  <{ x :=meas m }> P.
+    hoare_triple n n P <{ x :=meas m }> P.
 Proof.
 Admitted.
 

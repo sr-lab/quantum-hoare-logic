@@ -15,7 +15,7 @@ Definition PropOf {n: nat} (a: Assertion n): bool_exp := fst (snd a).
 Definition DensityOf {n: nat} (a: Assertion n) := snd ( snd a).
 
 Definition init_sub (n: nat) (P : Assertion n) : Assertion (n - 1) := 
-    pair (StateOf P) (pair (PropOf P) (( ⟨0∣ ⊗ (I (2 ^n))) × (DensityOf P) × (∣0⟩ ⊗ (I (2 ^n))))).
+    pair (StateOf P) (pair (PropOf P) (( ⟨0∣ ⊗ (I (2 ^(n - 1)))) × (DensityOf P) × (∣0⟩ ⊗ (I (2 ^(n - 1)))))).
 
 Definition apply_sub n (U: Unitary n) (P : Assertion n) : Assertion n :=
   pair (StateOf P) (pair (PropOf P) (U† × (DensityOf P) × U)). 

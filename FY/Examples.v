@@ -200,7 +200,9 @@ Proof.
   eapply E_Ass.
   simpl.
   eapply E_Seq.
-  apply E_IfTrue.
+  apply E_If.
+  simpl.
+  eapply E_AppOne.
   simpl.
   eapply E_AppOne.
   simpl.
