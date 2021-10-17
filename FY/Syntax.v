@@ -23,7 +23,8 @@ Inductive bool_exp : Type :=
   | BEq (a1 a2 : arith_exp)
   | BLe (a1 a2 : arith_exp)
   | BNot (b : bool_exp)
-  | BAnd (b1 b2 : bool_exp).
+  | BAnd (b1 b2 : bool_exp)
+  | BOr (b1 b2 : bool_exp).
 
 Inductive gate_exp : Type :=
   | GH
@@ -54,6 +55,7 @@ Notation "x / y" := (ADiv x y) (in custom com at level 40, left associativity).
 Notation "x <= y" := (BLe x y) (in custom com at level 70, no associativity).
 Notation "x == y" := (BEq x y) (in custom com at level 70, no associativity).
 Notation "x && y" := (BAnd x y) (in custom com at level 80, left associativity).
+Notation "x || y" := (BOr x y) (in custom com at level 80, left associativity).
 Notation "'~' b" := (BNot b) (in custom com at level 75, right associativity).
 Open Scope com_scope.
 

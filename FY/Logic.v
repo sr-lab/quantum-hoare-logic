@@ -6,6 +6,7 @@ From FY Require Export Utils.
 From FY Require Export Syntax.
 From FY Require Export Semantics.
 From FY Require Export Assertion.
+Set Printing All.
 
 Definition hoare_triple 
     (np nq: nat)
@@ -344,10 +345,13 @@ Proof.
     reflexivity.
 Qed.
 
-Theorem equal_traces_apply: forall rho M U ns m,
-trace (rho × (((M) †) × U × M))
-= trace (((padding (ns - 1) m M) × rho
- × (padding (ns - 1) m M) †) × U).
+Unset Printing Notations.
+
+Theorem equal_traces_apply: forall n m rho 
+(M: Unitary (2 ^ m)) 
+(U: Unitary (2 ^ n)) ,
+fst (trace ( (M × rho × M †) × U)) 
+ = fst (trace (rho × ((( M ) †) × U × M))).
 Proof.
 Admitted.
 
@@ -368,7 +372,8 @@ Proof.
     destruct G.
     rewrite applyPropOne.
     simpl.
-    unfold StateOf, apply_sub, PropOf in bev1. simpl in bev1.
+    unfold StateOf, apply_sub, PropOf in bev1. 
+    simpl in bev1.
     assert (bev2: beval (mergeMaps (StateOf P) (fst a)) (PropOf P) = true).
     unfold PropOf. apply bev1.
     rewrite bev2.
@@ -379,55 +384,169 @@ Proof.
     rewrite HH in Heq. 
     replace (Expectation ns2 n st1 (apply_sub n Utils.H P) ) 
     with (Expectation ns2 n (UpdateStateApply ns2 st1 m GH) P) by Heq.
-    symmetry.
-    unfold apply_sub, DensityOf. simpl.
     destruct (ns2 =? n) eqn:ns2n.
-    assert (TA: (trace (snd a × ((Utils.H) †) × snd (snd P) × Utils.H))
-    = (trace
-    (padding (ns2 - 1) m Utils.H × snd a × (padding (ns2 - 1) m Utils.H) †
-     × snd (snd P)))). 
+    assert (Hnns2: n = ns2). apply nateq in ns2n. symmetry. apply ns2n.
+    unfold DensityOf, apply_sub. simpl.
+    symmetry. unfold DensityOf, apply_sub. simpl.
+    Check (padding (ns2 - 1) m Utils.H).
     (* rewrite (equal_traces_apply (padding (ns2 - 1) m Utils.H) (snd a) (snd (snd P)) ns2 n). *)
 Admitted.
 
-(*TODO*)
+Definition disjunction {n1 n2 n3}(a1: Assertion n1) 
+(a2: Assertion n2) : Assertion n3 := 
+   ((_ !-> 0%nat), ((BOr (PropOf a1) (PropOf a2)), ((DensityOf a1) + (DensityOf a2) ))).
+
+Definition AssertPreMeas {n} (P: Assertion n) (x: string) (v: nat) 
+  (m : nat) : Assertion n := 
+  ( (StateOf P) , ( BAnd (<{ x == v }>) (PropOf P), 
+  (GetMeasurementBasis (n - 1%nat) m (v =? 0%nat)) 
+  × (DensityOf P) 
+  × (GetMeasurementBasis (n - 1%nat) m (v =? 0%nat))†))
+.
+
 Theorem fy_measure: forall n x m P, 
-    hoare_triple n n P <{ x :=meas m }> P.
+    hoare_triple n n (disjunction (AssertPreMeas P x 0%nat m) 
+    (AssertPreMeas P x 1%nat m)) <{ x :=meas m }> P.
 Proof.
+    unfold hoare_triple.
+    intros.
+    inversion H.
+    subst.
+    induction st1.
+    simpl. lra.
+    simpl.
+    destruct (beval (mergeMaps (_ !-> 0%nat) (fst a)) (PropOf P)) eqn:bev1.
 Admitted.
 
 Theorem fy_while: forall n b c P,
     hoare_triple n n (AssertPreIfTrue P b) c P ->
     hoare_triple n n P <{ while b do c end }>  (AssertPreIfTrue P (BNot b)).
 Proof.
+    unfold hoare_triple.
+    intros.
+    inversion H0.
+    subst.
+    apply H in H5.
 Admitted.
 
-Theorem fy_weakness: forall n c st P Q P' Q',
+Theorem fy_weakness: forall n c P Q P' Q',
     hoare_triple n n P c Q ->
-    weaker n n n st P' P ->
-    weaker n n n st Q Q' ->
+    (forall ns (st: list (total_map nat * Unitary (2 ^ ns))), weaker ns n n st P' P) ->
+    (forall ns (st: list (total_map nat * Unitary (2 ^ ns))), weaker ns n n st Q Q') ->
     hoare_triple n n P' c Q'.
 Proof.
     unfold hoare_triple, weaker.
     intros.
-    inversion H1.
-    subst.
     apply H in H2.
     eapply Rlt_trans_eq.
-Admitted.
+    apply (H0 ns1 st1).
+    eapply Rlt_trans_eq.
+    apply H2.
+    apply (H1 ns2 st2).
+Qed.
 
 Definition classicalPropsImp (np nq: nat)(P : Assertion np)
   (Q : Assertion nq) : Prop := forall st, 
+  (DensityOf P) = (DensityOf Q) ->
   beval (mergeMaps (StateOf P) st) (PropOf P) = true ->
-  beval (mergeMaps (StateOf P) st) (PropOf Q) = true .
+  beval (mergeMaps (StateOf Q) st) (PropOf Q) = true.
 
-Theorem fy_imp: forall n c P Q P',
+Axiom Rplus_le_compat_l: forall r r1 r2 : R, r1 <= r2 -> r + r1 <= r + r2.
+Axiom Rplus_le_sum_0: forall r r1: R, 0 <= r -> r1 <= r + r1.
+Axiom positive_trace: forall n m (U1: Unitary n) 
+(U2: Unitary m), 0 <= fst (trace (Mmult U1 U2)).
+
+Lemma equal_expectations_imp: forall n ns st P Q,
+(DensityOf P) = (DensityOf Q) ->
+classicalPropsImp n n P Q ->
+Expectation ns n st P <= Expectation ns n st Q.
+Proof.
+    intros.
+    induction st.
+    simpl. lra.
+    simpl.
+    unfold classicalPropsImp in H0.
+    destruct (beval (mergeMaps (StateOf P) (fst a)) (PropOf P)) eqn:bev.
+    rewrite (H0 (fst a)).
+    rewrite H.
+    destruct (ns =? n) eqn:nsn.
+    apply Rplus_le_compat_l.
+    apply IHst.
+    apply Rplus_le_compat_l.
+    apply IHst.
+    apply H.
+    apply bev.
+    assert (Hle: Expectation ns n st Q <=
+    (if beval (mergeMaps (StateOf Q) (fst a)) (PropOf Q)
+     then
+      ((if ns =? n
+        then fst (trace (snd a × DensityOf Q))
+        else fst (trace (snd a ⊗ I (ns - n) × DensityOf Q))) +
+       Expectation ns n st Q)%R
+     else Expectation ns n st Q)).
+    destruct (beval (mergeMaps (StateOf Q) (fst a)) (PropOf Q)) eqn:bev2.
+    destruct (ns =? n) eqn:nsn.
+    apply Rplus_le_sum_0.
+    apply positive_trace.
+    apply Rplus_le_sum_0.
+    apply positive_trace.
+    right. reflexivity.
+    destruct (beval (mergeMaps (StateOf Q) (fst a)) (PropOf Q)) eqn:bev2.
+    destruct (ns =? n) eqn:nsn.
+    assert(Expectation ns n st Q <=
+    fst (trace (snd a × DensityOf Q)) + Expectation ns n st Q).
+    apply Rplus_le_sum_0.
+    apply positive_trace.
+    eapply Rlt_trans_eq.
+    apply IHst.
+    apply H1.
+    assert(Expectation ns n st Q <=
+    fst (trace (snd a × DensityOf Q)) + Expectation ns n st Q).
+    apply Rplus_le_sum_0.
+    apply positive_trace.
+    eapply Rlt_trans_eq.
+    apply IHst.
+    apply Hle.
+    apply IHst.
+Qed.
+
+Theorem fy_imp_pre: forall n c P Q P',
     hoare_triple n n P c Q ->
-    classicalPropsImp n n P Q ->
+    (DensityOf P) = (DensityOf P') ->
+    classicalPropsImp n n P' P ->
     hoare_triple n n P' c Q.
 Proof.
-    unfold hoare_triple, classicalPropsImp.
+    unfold hoare_triple.
     intros.
-Admitted.
+    apply H in H2.
+    assert (Hexp: (Expectation ns1 n st1 P') <= (Expectation ns1 n st1 P)).
+    apply equal_expectations_imp. symmetry.
+    apply H0.
+    fold classicalPropsImp in H1.
+    apply H1.
+    eapply Rlt_trans_eq.
+    apply Hexp.
+    apply H2.
+Qed.
+
+Theorem fy_imp_post: forall n c P Q Q',
+    hoare_triple n n P c Q ->
+    (DensityOf Q) = (DensityOf Q') ->
+    classicalPropsImp n n Q Q' ->
+    hoare_triple n n P c Q'.
+Proof.
+    unfold hoare_triple.
+    intros.
+    apply H in H2.
+    assert (Hexp: (Expectation ns2 n st2 Q) <= (Expectation ns2 n st2 Q')).
+    apply equal_expectations_imp. 
+    apply H0.
+    apply H1.
+    eapply Rlt_trans_eq.
+    apply H2.
+    apply Hexp.
+Qed.
+
 
 
  

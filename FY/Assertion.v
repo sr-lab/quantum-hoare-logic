@@ -6,7 +6,7 @@ From FY Require Export State.
 Import ListNotations.
 
 Definition Assertion (n: nat) : Type := 
-  (total_map nat) * (bool_exp * (Unitary n)).
+  (total_map nat) * (bool_exp * (Unitary (2^n))).
 
 Definition StateOf {n: nat} (a: Assertion n) : total_map nat := fst a.
 
@@ -30,9 +30,9 @@ Fixpoint Expectation (ns na : nat)
         Rplus 
         ( 
           if ns =? na then 
-            (fst (trace (Mmult (snd st) (DensityOf a))))
+            (fst (trace ( (snd st) × (DensityOf a) )))
           else
-            (fst (trace (Mmult (kron (snd st) (I (ns - na))) (DensityOf a))))
+            (fst (trace (((snd st) ⊗ (I (ns - na))) × (DensityOf a))))
         ) 
         (Expectation ns na l a) 
         else

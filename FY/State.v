@@ -27,6 +27,7 @@ Fixpoint beval (st : total_map nat) (b : bool_exp) : bool :=
   | <{a1 <= a2}> => (aeval st a1) <=? (aeval st a2)
   | <{~ b1}> => negb (beval st b1)
   | <{b1 && b2}> => andb (beval st b1) (beval st b2)
+  | <{b1 || b2}> => orb (beval st b1) (beval st b2)
   end.
 
 
@@ -43,7 +44,7 @@ Definition geval (g : gate_exp) : Unitary _ :=
 
 Fixpoint padding (n : nat) (qubit : nat) (U : Unitary 2) : Unitary (2^(n + 1%nat)) :=
   match n with 
-  | O%nat => (if qubit =? 0%nat then U else I 2)
+  | O%nat => (if qubit =? 0%nat then U else (I 2))
   | S n' => (padding n' qubit U) ⊗ (if qubit =? n then U else I 2)
   end. 
 
