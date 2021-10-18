@@ -213,21 +213,6 @@ Theorem order: forall a b c: nat, (a <=? b) = true -> (b <=? c) = true -> (a <=?
 Proof.
 Admitted.
 
-Theorem imp1: classicalPropsImp 2 2 
-((_ !-> 0%nat) , (<{ X <= (3 % nat)}>, I 2)) 
-((_ !-> 0%nat) , (<{ X <= (4 % nat)}>, I 2)) .
-Proof.
-    unfold classicalPropsImp.
-    intros.
-    simpl.
-    simpl in H.
-    assert (H3: (3%nat <=? 4%nat) = true).
-    simpl. reflexivity.
-    eapply order.
-    apply H.
-    apply H3.
-Qed.
-
 Theorem mergeMapsExample: mergeMaps (X !-> 2%nat; _ !-> 0%nat) 
 (X !-> 3%nat; Y !-> 1%nat; _ !-> 0%nat) X = 2%nat.
 Proof.

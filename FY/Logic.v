@@ -33,6 +33,9 @@ Qed.
 
 Axiom Rlt_trans_eq : forall r1 r2 r3 : R, 
 r1 <= r2 -> r2 <= r3 -> r1 <= r3.
+Axiom Rplus_le_compat_l: forall r r1 r2 : R, r1 <= r2 -> r + r1 <= r + r2.
+Axiom Rplus_le_sum_0: forall r r1: R, 0 <= r -> r1 <= r + r1.
+Axiom Rplus_lt: forall r1 r2 r3 r4:R, r1 <= r2 -> r3 <= r4 -> r1 + r3 <= r2 + r4.
 
 Theorem fy_sequence: forall np nq nr P Q R c1 c2, 
     hoare_triple np nq P c1 Q ->
@@ -156,30 +159,6 @@ Proof.
     (* TODO*)
 Admitted.
 
-
-Theorem filterAssertPreIf: forall n ns st b P, 
-Expectation ns n (Filter ns st b) 
-(AssertPreIfTrue P b) = Expectation ns n st P.
-Proof.
-    intros.
-    induction st.
-    auto.
-    (*
-    destruct (beval (fst a) b) eqn:beva.
-    rewrite filterTrue.
-    simpl.
-    replace (DensityOf (AssertPreIfTrue P b)) with (DensityOf P).
-    rewrite ifHelper.
-    rewrite IHst. reflexivity. 
-    apply bevalMergeTrue. apply beva.
-    unfold AssertPreIfTrue, DensityOf. auto. 
-    apply beva.
-    rewrite filterFalse. simpl.
-    rewrite bevalMergeFalse.
-    apply IHst. 
-    *)
-Abort.
-
 Theorem expect_split: forall n ns2 st' st'' P,
 Expectation ns2 n (st' ++ st'') P = 
 Rplus (Expectation ns2 n st' P )
@@ -206,28 +185,75 @@ Proof.
     rewrite beva.
     simpl.
     rewrite ifHelper.
-    replace (Expectation ns n st P) with 
-    (Rplus (Expectation ns n (Filter ns st b) (AssertPreIfTrue P b))
-      (Expectation ns n (Filter ns st <{ ~ b }>) (AssertPreIfTrue P <{ ~ b }>))) 
-    by IHst.
-    simpl.
+    destruct (beval (mergeMaps (StateOf P) (fst a)) (PropOf P)) eqn:beva2.
+    destruct (ns =? n) eqn:nsn.
+    assert (Heq1: fst (trace (snd a × DensityOf (AssertPreIfTrue P b)))
+    = fst (trace (snd a × DensityOf P))).
+    unfold DensityOf, AssertPreIfTrue. simpl. reflexivity.
+    rewrite Heq1.
+    field_simplify.
+    assert (Hequiv: (fst (trace (snd a × DensityOf P)) +
+    (Expectation ns n (Filter ns st b) (AssertPreIfTrue P b) +
+    Expectation ns n (Filter ns st <{ ~ b }>) (AssertPreIfTrue P <{ ~ b }>)) =
+    fst (trace (snd a × DensityOf P)) + Expectation ns n st P)%R).
+    rewrite IHst. reflexivity.
+    field_simplify in Hequiv.
+    apply Hequiv.
+    assert (Heq2: fst (trace (snd a ⊗ I (ns - n) × DensityOf (AssertPreIfTrue P b))) 
+    = fst (trace (snd a ⊗ I (ns - n) × DensityOf P))).
     unfold DensityOf, AssertPreIfTrue. simpl.
     symmetry.
-    unfold DensityOf, AssertPreIfTrue. simpl.
-    destruct (beval (mergeMaps (StateOf P) (fst a)) (PropOf P)) eqn:bevb.
-    field_simplify. lra. lra.
-    apply bevalMergeTrue.
-    apply beva.
-    replace (Filter ns (a :: st) b) with (Filter ns st b).
-    replace (Filter ns (a :: st) (BNot b)) with (a :: Filter ns st (BNot b)).
-    rewrite expectation_sum_true. rewrite Rplus_comm. 
+    unfold DensityOf, AssertPreIfTrue. simpl. reflexivity.
+    assert (Hequiv2: (fst (trace (snd a ⊗ I (ns - n) × DensityOf P)) +
+    (Expectation ns n (Filter ns st b) (AssertPreIfTrue P b) +
+    Expectation ns n (Filter ns st <{ ~ b }>) (AssertPreIfTrue P <{ ~ b }>)) =
+    fst (trace (snd a ⊗ I (ns - n) × DensityOf P)) + Expectation ns n st P)%R).
+    rewrite IHst. reflexivity.
+    field_simplify in Hequiv2.
+    apply Hequiv2.
+    apply IHst.
+    apply bevalMergeTrue. apply beva.
+    simpl.
+    rewrite beva. simpl.
+    rewrite bevalMergeFalse. simpl.
+    destruct (beval (mergeMaps (StateOf P) (fst a)) (PropOf P)) eqn:bev3.
+    destruct (ns =? n) eqn:nsn.
     field_simplify.
-    symmetry. 
-    symmetry in IHst.
-    (*TODO*)
-Admitted.
-
-Axiom Rplus_lt: forall r1 r2 r3 r4:R, r1 <= r2 -> r3 <= r4 -> r1 + r3 <= r2 + r4.
+    assert (Heq: fst (trace (snd a × DensityOf (AssertPreIfTrue P <{ ~ b }>)))
+    = fst (trace (snd a × DensityOf P))).
+    unfold DensityOf, AssertPreIfTrue. simpl. reflexivity.
+    rewrite Heq.
+    rewrite (Rplus_comm (Expectation ns n (Filter ns st b) (AssertPreIfTrue P b)) 
+    (fst (trace (snd a × DensityOf P)))).
+    assert (Hequiv: (fst (trace (snd a × DensityOf P)) +
+    (Expectation ns n (Filter ns st b) (AssertPreIfTrue P b) +
+    Expectation ns n (Filter ns st <{ ~ b }>) (AssertPreIfTrue P <{ ~ b }>)) =
+    fst (trace (snd a × DensityOf P)) + Expectation ns n st P)%R).
+    rewrite IHst. reflexivity.
+    field_simplify in Hequiv.
+    apply Hequiv.
+    assert (Heq: fst (trace (snd a ⊗ I (ns - n) × DensityOf (AssertPreIfTrue P <{ ~ b }>)))
+    = fst (trace (snd a ⊗ I (ns - n) × DensityOf P))).
+    unfold DensityOf, AssertPreIfTrue. simpl. reflexivity.
+    rewrite Heq.
+    field_simplify.
+    rewrite (Rplus_comm (Expectation ns n (Filter ns st b) (AssertPreIfTrue P b)) 
+    (fst (trace (snd a ⊗ I (ns - n) × DensityOf P)))).
+    assert (Heq2: fst (trace (snd a ⊗ I (ns - n) × DensityOf (AssertPreIfTrue P b))) 
+    = fst (trace (snd a ⊗ I (ns - n) × DensityOf P))).
+    unfold DensityOf, AssertPreIfTrue. simpl.
+    symmetry.
+    unfold DensityOf, AssertPreIfTrue. reflexivity.
+    assert (Hequiv2: (fst (trace (snd a ⊗ I (ns - n) × DensityOf P)) +
+    (Expectation ns n (Filter ns st b) (AssertPreIfTrue P b) +
+    Expectation ns n (Filter ns st <{ ~ b }>) (AssertPreIfTrue P <{ ~ b }>)) =
+    fst (trace (snd a ⊗ I (ns - n) × DensityOf P)) + Expectation ns n st P)%R).
+    rewrite IHst. reflexivity.
+    field_simplify in Hequiv2.
+    apply Hequiv2.
+    apply IHst.
+    apply beva.
+Qed.
 
 Theorem fy_if: forall (n: nat) (b: bool_exp) (c1 c2: com) P Q, 
     hoare_triple n n (AssertPreIfTrue P b) c1 Q ->
@@ -243,11 +269,19 @@ Proof.
     assert (Hle: Rplus (Expectation ns1 n (Filter ns1 st1 b) (AssertPreIfTrue P b))
     (Expectation ns1 n (Filter ns1 st1 <{ ~ b }>) (AssertPreIfTrue P <{ ~ b }>)) 
     = (Expectation ns1 n st1 P)).
-    apply sum_expects_filters. rewrite <- Hle.
-    rewrite expect_split.
-    apply Rplus_lt.
-    apply H9.
-    apply H10.
+    apply sum_expects_filters.
+    assert (
+        Expectation ns1 n (Filter ns1 st1 b) (AssertPreIfTrue P b)
+        + Expectation ns1 n (Filter ns1 st1 <{ ~ b }>) (AssertPreIfTrue P <{ ~ b }>)
+        <= (Expectation ns2 n st' Q) + ( Expectation ns2 n st'' Q)
+    ).
+    apply Rplus_lt. apply H9. apply H10.
+    rewrite sum_expects_filters in H2. 
+    assert (Hsplit: (Expectation ns2 n st' Q + Expectation ns2 n st'' Q = Expectation ns2 n (st' ++ st'') Q)%R).
+    symmetry.
+    apply expect_split.
+    rewrite <- Hsplit.
+    apply H2.
 Qed.
 
 Theorem updateStateInitProp: forall n a st, 
@@ -451,8 +485,6 @@ Definition classicalPropsImp (np nq: nat)(P : Assertion np)
   beval (mergeMaps (StateOf P) st) (PropOf P) = true ->
   beval (mergeMaps (StateOf Q) st) (PropOf Q) = true.
 
-Axiom Rplus_le_compat_l: forall r r1 r2 : R, r1 <= r2 -> r + r1 <= r + r2.
-Axiom Rplus_le_sum_0: forall r r1: R, 0 <= r -> r1 <= r + r1.
 Axiom positive_trace: forall n m (U1: Unitary n) 
 (U2: Unitary m), 0 <= fst (trace (Mmult U1 U2)).
 
