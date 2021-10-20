@@ -89,7 +89,7 @@ Fixpoint UpdateStateMeasure (n : nat)  (state: list ((total_map nat)*(Unitary (2
   | st :: l => (pair (x !-> 0%nat; fst st) 
      ((GetMeasurementBasis (n - 1%nat) qubit true) × (snd st) × (GetMeasurementBasis (n - 1%nat) qubit true)†)) :: 
      (pair (x !-> 1%nat; fst st) 
-     ((GetMeasurementBasis (n - 1%nat) qubit false) × (snd st) × (GetMeasurementBasis (n - 1%nat) qubit false)†)):: 
+     ((GetMeasurementBasis (n - 1%nat) qubit false) × (snd st) × (GetMeasurementBasis (n - 1%nat) qubit false)†)) :: 
      (UpdateStateMeasure n l x qubit)
   end.
 

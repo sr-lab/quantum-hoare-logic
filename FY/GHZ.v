@@ -160,7 +160,7 @@ Abort.
 
 
 (* TODO : Swap gate+no cloning*)
-Definition P (tm: total_map nat): Assertion 3 :=  (tm, (<{ true }>, I 0)).
+Definition P (tm: total_map nat): Assertion 3 :=  (tm, (<{ true }>, I 1)).
 Definition Q (tm: total_map nat): Assertion 3 :=  (tm, (<{ X1 == X2 }>, I 3)).
 
 Theorem ghz_equality_end: forall tm, hoare_triple 0 3 (P tm) GHZ (Q tm).

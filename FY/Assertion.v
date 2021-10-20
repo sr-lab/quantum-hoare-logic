@@ -21,7 +21,7 @@ Definition apply_sub n (U: Unitary n) (P : Assertion n) : Assertion n :=
   pair (StateOf P) (pair (PropOf P) (U† × (DensityOf P) × U)). 
 
 Fixpoint Expectation (ns na : nat) 
-     (state: list ((total_map nat) * (Unitary (2 ^ns))))
+     (state: list ((total_map nat) * (Unitary (2 ^ ns))))
      (a: Assertion na) : R :=
     match state with
     | [] => 0%R
@@ -32,7 +32,7 @@ Fixpoint Expectation (ns na : nat)
           if ns =? na then 
             (fst (trace ( (snd st) × (DensityOf a) )))
           else
-            (fst (trace (((snd st) ⊗ (I (ns - na))) × (DensityOf a))))
+            (fst (trace (((snd st) ⊗ (I (2 ^ (ns - na)))) × (DensityOf a))))
         ) 
         (Expectation ns na l a) 
         else
@@ -49,7 +49,7 @@ Theorem expectation_sum_true: forall ns na (st: (total_map nat)*(Unitary (2 ^ ns
           (fst (trace (Mmult (snd st) 
           (DensityOf assert))))
         else
-          (fst (trace (Mmult (kron (snd st) (I (ns - na))) 
+          (fst (trace (Mmult (kron (snd st) (I (2^(ns - na)))) 
           (DensityOf assert))))
     ) 
     (Expectation ns na sts assert) .
@@ -70,24 +70,3 @@ Definition weaker (ns na1 na2 : nat)
     (assert2: Assertion na2) : Prop :=
       (Expectation ns na1 state assert1) 
       <= (Expectation ns na2 state assert2).
-
-(*
-Definition Satisfies (n: nat) 
-    (state: (total_map nat) * (Unitary (2^n))) (assertion: Assertion n) : bool :=
-    beval (fst state) (fst (assertion (fst state))).
-
-Definition X: string := "X".
-
-Definition assert : Assertion 1 := 
-  fun (tmn: total_map nat) => pair <{ X <= (3 % nat) }> H.
-
-Definition st : ((total_map nat) * (Unitary 2)) := 
-  ((X !-> 1%nat; _ !-> 0%nat), H).
-
-Theorem fstasst: (assert (fst st)) = pair <{ true }> H.
-Proof.
-    unfold assert.
-    simpl.
-Qed.
-
-    *)
