@@ -451,8 +451,16 @@ Qed.
 Theorem expectation_post_meas_split: forall n ns a st x m P,
 (Expectation ns n (UpdateStateMeasure ns (a :: st) x m) P)
 = 
-  ((fst (trace ((GetMeasurementBasis (n - 1%nat) m true) × (snd a) × (GetMeasurementBasis (n - 1%nat) m true)† × (DensityOf P) ))) +
-  (fst (trace ((GetMeasurementBasis (n - 1%nat) m false) × (snd a) × (GetMeasurementBasis (n - 1%nat) m false)† × (DensityOf P)))) + 
+  (( if ns =? n then 
+        (fst (trace ((GetMeasurementBasis (n - 1%nat) m true) × (snd a) × (GetMeasurementBasis (n - 1%nat) m true)† × (DensityOf P) )))
+     else 
+        (fst (trace ((GetMeasurementBasis (n - 1%nat) m true) × (snd a ⊗ I (2 ^ (ns - n))) × (GetMeasurementBasis (n - 1%nat) m true)† × (DensityOf P) )))  
+   ) +
+   ( if ns =? n then 
+        (fst (trace ((GetMeasurementBasis (n - 1%nat) m false) × (snd a) × (GetMeasurementBasis (n - 1%nat) m false)† × (DensityOf P) )))
+     else 
+        (fst (trace ((GetMeasurementBasis (n - 1%nat) m false) × (snd a ⊗ I (2 ^ (ns - n))) × (GetMeasurementBasis (n - 1%nat) m false)† × (DensityOf P) )))  
+   ) + 
 (Expectation ns n (UpdateStateMeasure ns st x m) P))%R.
 Proof.
     intros.
@@ -540,8 +548,9 @@ Proof.
     remember (GetMeasurementBasis (n - 1) m false × snd (snd P)
     × (GetMeasurementBasis (n - 1) m false) †) as m2.
     remember (snd a) as m3.
-    apply nateq in ns2n.
-    rewrite ns2n.
+    assert (Hnsn: ns2 = n).
+    apply nateq. apply ns2n. 
+    rewrite Hnsn.
     rewrite matrices_distributive.
     rewrite traces_sum.  
     assert (H111: fst (trace (m3 × m1)) = fst
@@ -553,7 +562,7 @@ Proof.
             remember (snd a) as p1.
             remember (GetMeasurementBasis (n - 1) m true) as p2.
             remember (snd (snd P)) as p3.
-            rewrite ns2n.
+            rewrite Hnsn.
             simpl.
             rewrite nminusplus.
             simpl.
@@ -568,7 +577,7 @@ Proof.
             remember (snd a) as p1.
             remember (GetMeasurementBasis (n - 1) m true) as p2.
             remember (snd (snd P)) as p3.
-            rewrite ns2n.
+            rewrite Hnsn.
             simpl.
             rewrite nminusplus.
             simpl.
@@ -576,7 +585,7 @@ Proof.
         }
     rewrite <- H111.
     rewrite <- H222.
-    rewrite ns2n.
+    rewrite Hnsn.
     simpl.
     reflexivity.
     rewrite Heqg.
@@ -586,12 +595,12 @@ Proof.
     remember (Expectation ns2 n (UpdateStateMeasure ns2 st1 x m) P) as r1.
     remember (fst
         (trace
-        (GetMeasurementBasis (n - 1) m true × snd a
+        (GetMeasurementBasis (n - 1) m true × (snd a ⊗ I (2 ^ (ns2 - n)))
             × (GetMeasurementBasis (n - 1) m true) † × 
             DensityOf P))) as r2.
     remember (fst
         (trace
-        (GetMeasurementBasis (n - 1) m false × snd a
+        (GetMeasurementBasis (n - 1) m false × (snd a ⊗ I (2 ^ (ns2 - n)))
             × (GetMeasurementBasis (n - 1) m false) † × 
             DensityOf P))) as r3.
     remember (fst (trace ((snd a ⊗ I (2 ^ (ns2 - n))) × (DensityOf (disjunction (AssertPreMeas P x 0%nat m) (AssertPreMeas P x 1%nat m)))))) as r4.
@@ -619,7 +628,7 @@ Proof.
         × (GetMeasurementBasis (n - 1) m true) † × 
         snd (snd P)))). {
             rewrite Heqm1, Heqm3.
-            remember (snd a) as p1.
+            remember (snd a ⊗ I (2 ^ (ns2 - n))) as p1.
             remember (GetMeasurementBasis (n - 1) m true) as p2.
             remember (snd (snd P)) as p3.
             rewrite nminusplus.
@@ -633,7 +642,7 @@ Proof.
         × (GetMeasurementBasis (n - 1) m false) † × 
         snd (snd P)))). {
             rewrite Heqm2, Heqm3.
-            remember (snd a) as p1.
+            remember  (snd a ⊗ I (2 ^ (ns2 - n))) as p1.
             remember (GetMeasurementBasis (n - 1) m true) as p2.
             remember (snd (snd P)) as p3.
             rewrite nminusplus.
@@ -641,6 +650,27 @@ Proof.
             simpl.
             apply equal_traces_mult.
         }
+    remember (GetMeasurementBasis (n - 1) m true) as bs1.
+    remember (GetMeasurementBasis (n - 1) m false) as bs2.
+    remember (snd (snd P)) as p3.
+    simpl.
+    Check bs1.
+    Check bs2.
+    Check p3.
+    Check bs1 × m3 × (bs1) † × p3.
+    admit.
+    rewrite <- Rplus_assoc.
+    rewrite <- Rplus_comm.
+    symmetry.
+    rewrite <- Rplus_comm.
+    rewrite <- Heqr5.
+    rewrite Heqg.
+    reflexivity.
+    apply E_Meas.
+    unfold disjunction, AssertPreMeas, PropOf.
+    simpl.
+    rewrite mergeSameMaps.
+    rewrite morgan_or_and.
 Admitted.
 
 Theorem fy_while: forall n b c P,
