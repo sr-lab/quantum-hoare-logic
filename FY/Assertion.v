@@ -14,12 +14,42 @@ Definition PropOf {n: nat} (a: Assertion n): bool_exp := fst (snd a).
 
 Definition DensityOf {n: nat} (a: Assertion n) := snd ( snd a).
 
-Definition init_sub (n: nat) (P : Assertion n) : Assertion (n - 1) := 
-    pair (StateOf P) (pair (PropOf P) (( ⟨0∣ ⊗ (I (2 ^(n - 1)))) × (DensityOf P) × (∣0⟩ ⊗ (I (2 ^(n - 1)))))).
+Definition base1 (n: nat) := ( ⟨0∣ ⊗ (I (2 ^(n - 1)))).
+Definition base2 (n: nat) := ( ∣0⟩ ⊗ (I (2 ^(n - 1)))).
 
-Definition apply_sub n (U: Unitary n) (P : Assertion n) : Assertion n :=
+Definition pre_init (n: nat) (m: Unitary (2^n))
+  : Unitary (2^(n - 1%nat)) := (base1 n) × m × (base2 n).
+
+Definition init_sub (n: nat) (P : Assertion n) : Assertion (n - 1) := 
+    pair (StateOf P) (pair (PropOf P) (pre_init n (DensityOf P))).
+
+Definition apply_sub n (U: Unitary (2^n)) (P : Assertion n) : Assertion n :=
   pair (StateOf P) (pair (PropOf P) (U† × (DensityOf P) × U)). 
 
+Definition max (n1: nat) (n2: nat) : nat := if n1 <=? n2 then n2 else n1.
+
+Definition complement (n1 n2: nat) (rho: Unitary (2 ^ n1)) : Unitary (2 ^ (max n1 n2)) := 
+  if (n2 <=? n1) then rho else rho ⊗ (I (2 ^ (n2 - n1)))
+.
+
+Fixpoint Expectation (ns na : nat) 
+     (state: list ((total_map nat) * (Unitary (2 ^ ns))))
+     (a: Assertion na) : R :=
+    match state with
+    | [] => 0%R
+    | st :: l => 
+        if beval (mergeMaps (fst st) (StateOf a)) (PropOf a) then 
+        Rplus 
+        ( 
+          fst (trace ((complement ns na (snd st)) × (complement na ns (DensityOf a))))
+        ) 
+        (Expectation ns na l a) 
+        else
+        (Expectation ns na l a)
+    end
+.
+
+(* 
 Fixpoint Expectation (ns na : nat) 
      (state: list ((total_map nat) * (Unitary (2 ^ ns))))
      (a: Assertion na) : R :=
@@ -39,6 +69,7 @@ Fixpoint Expectation (ns na : nat)
         (Expectation ns na l a)
     end
 .
+*)
 
 Theorem expectation_sum_true: forall ns na (st: (total_map nat)*(Unitary (2 ^ ns))) (sts: list ((total_map nat)*(Unitary (2 ^ns)))) assert,  
   beval (mergeMaps (StateOf assert) (fst st)) (PropOf assert) = true -> 

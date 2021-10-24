@@ -32,8 +32,7 @@ Inductive gate_exp : Type :=
   | GY 
   | GZ
   | GI
-  | GCNOT
-  | GOracle (n : nat) (U : Matrix n n).
+  | GCNOT.
 
 Coercion AId : string >-> arith_exp.
 Coercion ANum : nat >-> arith_exp.

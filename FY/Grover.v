@@ -34,9 +34,9 @@ Admitted.
 (* Definition G := GOracle 8 (( 2 * (∣+⟩⊗∣+⟩⊗∣+⟩⟨+∣⊗⟨+∣⊗⟨+∣) - (I 8)) × U100). *)
 
 
-Definition Us : Unitary 8 := ((∣+⟩⊗∣+⟩⊗∣+⟩)×(⟨+∣⊗⟨+∣⊗⟨+∣)) + (-1 * (I 8)).
+(* Definition Us : Unitary 8 := ((∣+⟩⊗∣+⟩⊗∣+⟩)×(⟨+∣⊗⟨+∣⊗⟨+∣)) + (-1 * (I 8)). *)
 
-Definition G := GOracle 8 (Us × U100).
+(* Definition G := GOracle 8 (Us × U100). *)
 
 Lemma kron_I_1: kron (I 2) (I 1) == I 2.
 Proof.
@@ -54,7 +54,7 @@ Definition GROVER : com :=
     K := (3 % nat); (* 3 ~ sqrt(8) *)
     X := (0 % nat);
     while X <= K do
-      q 0 1 *= G;
+      q 0 1 *= GCNOT;
       X := (X + 1%nat)
     end;
     Y0 :=meas 0;

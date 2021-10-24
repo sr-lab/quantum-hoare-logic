@@ -39,7 +39,6 @@ Definition geval (g : gate_exp) : Unitary _ :=
   | GZ => Z
   | GY => Y
   | GCNOT => CNOT
-  | GOracle n U => U
   end.
 
 Fixpoint padding (n : nat) (qubit : nat) (U : Unitary 2) : Unitary (2^(n + 1%nat)) :=
@@ -67,7 +66,6 @@ Fixpoint UpdateStateApply (n : nat) (state: list ((total_map nat)*(Unitary (2^n)
   match state with
   | [] => []
   | st :: l => match U with
-      | GOracle m GU => (pair (fst st) ((padding (n - 3%nat) qubit (geval U)) × (snd st) × (padding (n - 3%nat) qubit (geval U))†) ) :: (UpdateStateApply n l qubit U)
       | GCNOT => (pair (fst st) ((padding (n - 2%nat) qubit (geval U)) × (snd st) × (padding (n - 2%nat) qubit (geval U))†) ) :: (UpdateStateApply n l qubit U)
       | _ => (pair (fst st) ((padding (n - 1%nat) qubit (geval U)) × (snd st) × (padding (n - 1%nat) qubit (geval U))†) ) :: (UpdateStateApply n l qubit U)
     end
@@ -83,7 +81,7 @@ Fixpoint GetMeasurementBasis (nq : nat) (qubit : nat) (isZero : bool) : Unitary 
           else (GetMeasurementBasis n' qubit isZero) ⊗ (I 2))
   end.
 
-Fixpoint UpdateStateMeasure (n : nat)  (state: list ((total_map nat)*(Unitary (2^n)))) (x : string) (qubit : nat) : list ((total_map nat)*(Unitary (2^n))) :=
+Fixpoint UpdateStateMeasure (n: nat)  (state: list ((total_map nat)*(Unitary (2^n)))) (x : string) (qubit : nat) : list ((total_map nat)*(Unitary (2^n))) :=
   match state with
   | [] => []
   | st :: l => (pair (x !-> 0%nat; fst st) 
