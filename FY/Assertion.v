@@ -26,6 +26,13 @@ Definition init_sub (n: nat) (P : Assertion n) : Assertion (n - 1) :=
 Definition apply_sub n (U: Unitary (2^n)) (P : Assertion n) : Assertion n :=
   pair (StateOf P) (pair (PropOf P) (U† × (DensityOf P) × U)). 
 
+Definition AssertionWithDensity (n m: nat) (P: Assertion n) (U: Unitary (2^m)) : Assertion m := 
+  (StateOf P, (PropOf P, U)).
+
+Definition AssertionOf (n: nat) (st: total_map nat) 
+(prop: bool_exp) (U: Unitary (2^n)) : Assertion n := 
+  (st, (prop, U)).
+
 Definition max (n1: nat) (n2: nat) : nat := if n1 <=? n2 then n2 else n1.
 
 Definition complement (n1 n2: nat) (rho: Unitary (2 ^ n1)) : Unitary (2 ^ (max n1 n2)) := 
@@ -48,28 +55,6 @@ Fixpoint Expectation (ns na : nat)
         (Expectation ns na l a)
     end
 .
-
-(* 
-Fixpoint Expectation (ns na : nat) 
-     (state: list ((total_map nat) * (Unitary (2 ^ ns))))
-     (a: Assertion na) : R :=
-    match state with
-    | [] => 0%R
-    | st :: l => 
-        if beval (mergeMaps (StateOf a) (fst st)) (PropOf a) then 
-        Rplus 
-        ( 
-          if ns =? na then 
-            (fst (trace ( (snd st) × (DensityOf a) )))
-          else
-            (fst (trace (((snd st) ⊗ (I (2 ^ (ns - na)))) × (DensityOf a))))
-        ) 
-        (Expectation ns na l a) 
-        else
-        (Expectation ns na l a)
-    end
-.
-*)
 
 Theorem expectation_sum_true: forall ns na (st: (total_map nat)*(Unitary (2 ^ ns))) (sts: list ((total_map nat)*(Unitary (2 ^ns)))) assert,  
   beval (mergeMaps (StateOf assert) (fst st)) (PropOf assert) = true -> 

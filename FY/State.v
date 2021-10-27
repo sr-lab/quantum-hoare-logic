@@ -41,17 +41,19 @@ Definition geval (g : gate_exp) : Unitary _ :=
   | GCNOT => CNOT
   end.
 
+Definition State (n: nat): Type := list ((total_map nat)*(Unitary (2^n))).
+
+Fixpoint UpdateStateAssign (n : nat) (state: State n) (x: string) (a: arith_exp) :=
+  match state with
+  | [] => []
+  | st :: l => (pair (x !-> (aeval (fst st) a); fst st) (snd st)) :: (UpdateStateAssign n l x a)
+  end.
+
 Fixpoint padding (n : nat) (qubit : nat) (U : Unitary 2) : Unitary (2^(n + 1%nat)) :=
   match n with 
   | O%nat => (if qubit =? 0%nat then U else (I 2))
   | S n' => (padding n' qubit U) ⊗ (if qubit =? n then U else I 2)
   end. 
-
-Fixpoint UpdateStateAssign (n : nat) (state: list ((total_map nat)*(Unitary (2^n)))) (x : string) (a : arith_exp) : list ((total_map nat)*(Unitary (2^n))) :=
-  match state with
-  | [] => []
-  | st :: l => (pair (x !-> (aeval (fst st) a); fst st) (snd st)) :: (UpdateStateAssign n l x a)
-  end.
 
 Fixpoint UpdateStateInit (n : nat) (state: list ((total_map nat)*(Unitary (2^n)))) : list ((total_map nat)*(Unitary (2^(n + 1%nat)))) :=
   match state with

@@ -8,7 +8,7 @@ From FY Require Export Semantics.
 From FY Require Export Assertion.
 
 Definition hoare_triple 
-    (np nq: nat)
+    {np nq: nat}
     (P : Assertion np) 
     (c : com) 
     (Q : Assertion nq): Prop :=
@@ -19,7 +19,8 @@ Definition hoare_triple
     (Expectation ns1 np st1 P) 
      <= (Expectation ns2 nq st2 Q).
 
-Theorem fy_skip: forall n P, hoare_triple n n P <{skip}> P.
+Theorem fy_skip: forall n (P: Assertion n), 
+   hoare_triple P <{skip}> P.
 Proof.
     unfold hoare_triple.
     intros.
@@ -50,10 +51,11 @@ Proof.
   reflexivity.
 Qed.
 
-Theorem fy_sequence: forall np nq nr P Q R c1 c2, 
-    hoare_triple np nq P c1 Q ->
-    hoare_triple nq nr Q c2 R ->
-    hoare_triple np nr P <{ c1;c2 }> R.
+Theorem fy_sequence: forall np nq nr (P: Assertion np) 
+  (Q: Assertion nq) (R: Assertion nr) c1 c2, 
+    hoare_triple P c1 Q ->
+    hoare_triple Q c2 R ->
+    hoare_triple P <{ c1;c2 }> R.
 Proof.
     unfold hoare_triple.
     intros.
@@ -65,8 +67,6 @@ Proof.
     apply H6.
     apply H9.
 Qed.
-
-Check UpdateStateAssign. 
 
 Theorem updateAsgnProp: forall n st l x e,
 UpdateStateAssign n (st :: l) x e = 
@@ -88,9 +88,9 @@ Proof.
 (* TODO *)
 Admitted.
 
-Theorem fy_assign: forall n x e P, 
+Theorem fy_assign: forall n x e (P: Assertion n), 
     StateOf P =  t_empty 0%nat ->
-    hoare_triple n n (AssertPreAsgn P x e) <{ x := e }> P.
+    hoare_triple (AssertPreAsgn P x e) <{ x := e }> P.
 Proof.
     unfold hoare_triple.
     intros.
@@ -222,10 +222,11 @@ Proof.
     apply beva.
 Qed.
 
-Theorem fy_if: forall (n: nat) (b: bool_exp) (c1 c2: com) P Q, 
-    hoare_triple n n (AssertPreIfTrue P b) c1 Q ->
-    hoare_triple n n (AssertPreIfTrue P (BNot b)) c2 Q ->
-    hoare_triple n n P <{ if b then c1 else c2 end }> Q.
+Theorem fy_if: forall (n: nat) (b: bool_exp) (c1 c2: com) 
+    (P Q: Assertion n), 
+    hoare_triple (AssertPreIfTrue P b) c1 Q ->
+    hoare_triple (AssertPreIfTrue P (BNot b)) c2 Q ->
+    hoare_triple P <{ if b then c1 else c2 end }> Q.
 Proof.
     unfold hoare_triple.
     intros.
@@ -280,8 +281,8 @@ Lemma equal_traces_init_ns_0: forall (n: nat) a
 (P: Assertion n),
 fst (trace (complement 1 n ∣0⟩⟨0∣ × complement n 1 (DensityOf P))) 
 = fst (trace
-   (complement 0 (n + 1) a
-    × complement (n + 1) 0 (DensityOf (init_sub n P)))).
+   (complement 0 (n - 1) a
+    × complement (n - 1) 0 (DensityOf (init_sub n P)))).
 Proof.
 Admitted.
 
@@ -289,8 +290,8 @@ Lemma equal_traces_init_ns_gt_0: forall (n ns: nat) (a: Unitary (2^ns))
 (P: Assertion n),
 fst
    (trace
-      (complement ns (n + 1) a
-       × complement (n + 1) ns (pre_init n (snd (snd P)))))
+      (complement ns (n - 1) a
+       × complement (n - 1) ns (pre_init n (snd (snd P)))))
 = 
 fst
 (trace
@@ -299,8 +300,8 @@ fst
 Proof.
 Admitted.
 
-Theorem fy_init: forall n P, 
-    hoare_triple (n + 1%nat) n (init_sub n P) <{ new_qubit }> P.
+Theorem fy_init: forall n (P: Assertion n), 
+    hoare_triple (init_sub n P) <{ new_qubit }> P.
 Proof.
     unfold hoare_triple.
     intros.
@@ -413,23 +414,8 @@ fst
 Proof.
 Admitted.
 
-Theorem equal_traces_apply_oracle: forall (n ns m: nat) (G: Unitary 2)
-(P: Assertion n) (a: Unitary (2^ns)),
-fst
-   (trace
-      ((complement ns n a)
-       × (complement n ns (DensityOf (apply_sub n G P)))))
-=
-fst
-   (trace
-      ((complement ns n ((padding (ns - 3) m G) × a
-          × (padding (ns - 3) m G) †))
-       × (complement n ns (DensityOf P)))).
-Proof.
-Admitted.
-
-Theorem fy_apply: forall n m G P, 
-    hoare_triple n n (apply_sub n (geval G) P) <{ q m *= G }> P.
+Theorem fy_apply: forall n m G (P: Assertion n), 
+    hoare_triple (apply_sub n (geval G) P) <{ q m *= G }> P.
 Proof.
     unfold hoare_triple.
     intros.
@@ -565,111 +551,12 @@ Theorem mergeSameMaps: forall mp, (mergeMaps mp mp) = mp.
 Proof.
 Admitted.
 
-Definition disjunction {n} (a1 a2: Assertion n) : Assertion n := 
-   ((_ !-> 0%nat), ((BOr (PropOf a1) (PropOf a2)), ((DensityOf a1) + (DensityOf a2) ))).
-
-Axiom reduce_merge_maps: forall mp, mergeMaps mp (_ !-> 0%nat) = mp.
-
-Lemma distrib_disjunction: forall n ns a P Q,
-(fst
-   (trace
-      ((complement ns n a)
-       × (complement n ns (DensityOf (disjunction P Q))))))
-= ((fst (trace ((complement ns n a) × (complement n ns (DensityOf P))))) +
-(fst (trace ((complement ns n a) × (complement n ns (DensityOf Q))))))%R.
-Proof.
-Admitted.
-
-Lemma disjunction_expectation: forall n ns st P Q,
-(Expectation ns n st (disjunction P Q)) = 
-((Expectation ns n st P) +
-(Expectation ns n st Q))%R.
-Proof.
-    intros.
-    induction st.
-    simpl.
-    lra.
-    simpl.
-    rewrite reduce_merge_maps.
-    destruct (beval (fst a) (PropOf P)) eqn:bev1.
-    destruct (beval (fst a) (PropOf Q)) eqn:bev2.
-    simpl.
-    assert (bev3: beval (mergeMaps (fst a) (StateOf P)) (PropOf P) = true).
-    apply bevalMergeTrue. apply bev1.
-    assert (bev4: beval (mergeMaps (fst a) (StateOf Q)) (PropOf Q) = true).
-    apply bevalMergeTrue. apply bev2.
-    rewrite bev3.
-    rewrite bev4.
-    rewrite distrib_disjunction.
-    remember (fst (trace (complement ns n (snd a) × complement n ns (DensityOf P)))) as r1.
-    remember (fst (trace (complement ns n (snd a) × complement n ns (DensityOf Q)))) as r2.
-    field_simplify.
-    rewrite IHst.
-    field_simplify.
-    reflexivity.
-    simpl.
-    assert (bev3: beval (mergeMaps (fst a) (StateOf P)) (PropOf P) = true).
-    apply bevalMergeTrue. apply bev1.
-    assert (bev4: beval (mergeMaps (fst a) (StateOf Q)) (PropOf Q) = false).
-    apply bevalMergeFalse. apply bev2.
-    rewrite bev3.
-    rewrite bev4.
-Admitted.
-
 Definition AssertPreMeas {n} (P: Assertion n) (x: string) (v: nat) 
   (m : nat) : Assertion n := 
   ( (x !-> v; StateOf P) , ( (PropOf P), 
   (GetMeasurementBasis (n - 1%nat) m (v =? 0%nat)) 
   × (DensityOf P) 
   × (GetMeasurementBasis (n - 1%nat) m (v =? 0%nat))†)).
-
-Theorem morgan_or_and: forall a P, orb (andb a P) (andb (negb a) P) = P.
-Proof.
-    intros.
-    destruct a eqn:ca.
-    simpl. 
-    repeat(destruct P eqn:pa; auto).
-    simpl. reflexivity.
-Qed.
-
-Theorem expectation_post_meas_split: forall n ns a st x m P,
-(Expectation ns n (UpdateStateMeasure ns (a :: st) x m) P)
-<= 
-  (( if beval (fst a) (PropOf P) then 
-        if ns =? n then 
-            (fst (trace (((GetMeasurementBasis (n - 1%nat) m true) 
-              × (snd a) 
-              × (GetMeasurementBasis (n - 1%nat) m true)† )
-              × (DensityOf P) )))
-        else 
-            (fst (trace (((GetMeasurementBasis (n - 1%nat) m true) 
-              × (snd a ⊗ I (2 ^ (ns - n))) 
-              × (GetMeasurementBasis (n - 1%nat) m true)† )
-              × (DensityOf P) )))
-     else 0%R  
-   ) +
-   ( if beval (fst a) (PropOf P) then 
-        if ns =? n then 
-            (fst (trace ((GetMeasurementBasis (n - 1%nat) m false) 
-              × (snd a) 
-              × (GetMeasurementBasis (n - 1%nat) m false)† 
-              × (complement n ns (DensityOf P)) )))
-        else 
-            (fst (trace ((GetMeasurementBasis (n - 1%nat) m false) 
-              × (snd a ⊗ I (2 ^ (ns - n))) 
-              × (GetMeasurementBasis (n - 1%nat) m false)† 
-              × (complement n ns (DensityOf P)) ))) 
-     else 0%R
-   ) + 
-(Expectation ns n (UpdateStateMeasure ns st x m) P))%R.
-Proof.
-    intros.
-    destruct (beval (fst a) (PropOf P)) eqn:beva.
-    destruct (ns =? n) eqn:nsn.
-    simpl.
-    destruct (beval (mergeMaps (StateOf P) (x !-> 0%nat; fst a)) (PropOf P)) eqn:bev1.
-    destruct (beval (mergeMaps (StateOf P) (x !-> 1%nat; fst a)) (PropOf P)) eqn:bev2.
-Admitted.
 
 Lemma traces_sum: forall {n} (m1 m2: Matrix n n),
   fst (trace (m1 + m2)) = ((fst (trace m1)) + (fst (trace m2)))%R.
@@ -686,49 +573,10 @@ fst (trace (p1 × (p2 × p3 × (p2) †))) = fst (trace (p2 × p1 × (p2) † ×
 Proof.
 Admitted.
 
-Lemma equivalent_with_respect_to_x: forall n st (P: Assertion n) x v,
+Lemma equivalent_with_respect_to_x: 
+forall n st (P: Assertion n) x v,
 beval (mergeMaps st (x !-> v; StateOf P)) (PropOf P)
 = beval (mergeMaps (x !-> v; st) (StateOf P)) (PropOf P).
-Proof.
-Admitted.
-
-Definition conjunction {n: nat} (P1: Assertion n) 
-(P2: Assertion n) : (Assertion n) := 
-((_ !-> 0%nat), (BAnd (PropOf P1) (PropOf P2), (DensityOf P1) + (DensityOf P2))).
-
-Lemma conjunction_expectation: forall n ns a st (P1 P2: Assertion n),
-Expectation ns n (a :: st) (conjunction P1 P2)
- = (if
- beval (mergeMaps (fst a) (StateOf P1)) (PropOf P1) &&
- beval (mergeMaps (fst a) (StateOf P2)) (PropOf P2)
-then
- ((fst (trace ( (complement ns n (snd a))
-        × (complement n ns (DensityOf (conjunction P1 P2)))))) +
-  (Expectation ns n st (conjunction P1 P2)))%R
-else
- (Expectation ns n st (conjunction P1 P2))).
-Proof.
-Admitted.
-
-Theorem equal_traces_meas: forall n ns m x a P,
-fst
-  (trace
-     (complement ns n a
-      × complement n ns
-          (DensityOf
-             (conjunction (AssertPreMeas P x 0 m) (AssertPreMeas P x 1 m)))))
-=
-((fst (trace 
-        (complement ns n
-            (GetMeasurementBasis (ns - 1) m true × a
-                 × (GetMeasurementBasis (ns - 1) m true) †)
-            × complement n ns (DensityOf P)))) +
-(fst
-    (trace
-        (complement ns n
-            (GetMeasurementBasis (ns - 1) m false × a
-             × (GetMeasurementBasis (ns - 1) m false) †)
-             × complement n ns (DensityOf P)))))%R.
 Proof.
 Admitted.
 
@@ -742,100 +590,136 @@ Qed.
 Axiom positive_trace: forall n m (U1: Unitary n) 
 (U2: Unitary m), 0 <= fst (trace (Mmult U1 U2)).
 
-Theorem fy_measure: forall n x m P, 
-    hoare_triple n n (conjunction (AssertPreMeas P x 0%nat m) 
-    (AssertPreMeas P x 1%nat m)) <{ x :=meas m }> P.
+Lemma equal_traces_meas: 
+forall n ns a (P: Assertion n) x m v,
+fst
+  (trace
+     (complement ns n a
+      × complement n ns (DensityOf (AssertPreMeas P x v m))))
+= 
+fst
+  (trace
+     ((complement ns n
+        ((GetMeasurementBasis (ns - 1) m (v =? 0)) × a
+         × (GetMeasurementBasis (ns - 1) m (v =? 0)) †))
+      × (complement n ns (DensityOf P)))).
 Proof.
-    unfold hoare_triple.
+Admitted.
+
+Theorem fy_measure: forall n x m (P: Assertion n), 
+    hoare_triple (AssertPreMeas P x 1%nat m) 
+    <{ x :=meas m }> P 
+    /\ 
+    hoare_triple (AssertPreMeas P x 0%nat m) 
+    <{ x :=meas m }> P.
+Proof.
+    intros.
+    split.
+    - unfold hoare_triple.
     intros.
     inversion H.
     subst.
     induction st1.
     simpl. lra.
-    rewrite conjunction_expectation.
     simpl.
-    destruct (beval (mergeMaps (x !-> 0%nat; fst a) (StateOf P)) (PropOf P)) eqn:bev1.
-    assert (Hbev1: beval (mergeMaps (fst a) (x !-> 0%nat; StateOf P))
-    (PropOf (AssertPreMeas P x 0 m)) = true).
-    rewrite equal_props.
-    rewrite equivalent_with_respect_to_x. apply bev1.
+    destruct (beval (mergeMaps (fst a) (x !-> 1%nat; StateOf P))
+    (PropOf (AssertPreMeas P x 1 m))) eqn:bev1.
+    assert (Hbev1: beval (mergeMaps (x !-> 1%nat; fst a) (StateOf P)) (PropOf P) = true).
+    rewrite equal_props in bev1.
+    rewrite equivalent_with_respect_to_x in bev1.
+    apply bev1.
     rewrite Hbev1.
-    destruct (beval (mergeMaps (x !-> 1%nat; fst a) (StateOf P)) (PropOf P)) eqn:bev2.
-    assert (Hbev2: beval (mergeMaps (fst a) (x !-> 1%nat; StateOf P))
-    (PropOf (AssertPreMeas P x 1 m)) = true).
-    rewrite equal_props.
-    rewrite equivalent_with_respect_to_x. apply bev2.
-    rewrite Hbev2.
-    simpl.
+    destruct (beval (mergeMaps (x !-> 0%nat; fst a) (StateOf P)) (PropOf P)) eqn:bev2.
     rewrite equal_traces_meas.
-    remember (fst (trace
-       (complement ns2 n
-          (GetMeasurementBasis (ns2 - 1) m true × snd a
-           × (GetMeasurementBasis (ns2 - 1) m true) †)
-        × complement n ns2 (DensityOf P)))) as r1.
-    remember (fst (trace
-       (complement ns2 n
+    simpl.
+    remember (fst (trace (complement ns2 n
           (GetMeasurementBasis (ns2 - 1) m false × snd a
            × (GetMeasurementBasis (ns2 - 1) m false) †)
+        × complement n ns2 (DensityOf P))) ) as r1.
+    remember (fst (trace (complement ns2 n
+          (GetMeasurementBasis (ns2 - 1) m true × snd a
+           × (GetMeasurementBasis (ns2 - 1) m true) †)
         × complement n ns2 (DensityOf P)))) as r2.
-    rewrite <- Rplus_assoc.
-    remember ((r1 + r2)%R) as r3.
+    field_simplify.
+    rewrite Rplus_assoc.
+    apply Rplus_le_compat_l.
+    eapply Rlt_trans_eq.
+    apply IHst1.
+    apply E_Meas.
+    apply Rplus_le_sum_0.
+    rewrite Heqr2.
+    apply positive_trace.
+    rewrite equal_traces_meas.
+    simpl.
+    remember (fst (trace (complement ns2 n
+          (GetMeasurementBasis (ns2 - 1) m false × snd a
+           × (GetMeasurementBasis (ns2 - 1) m false) †)
+        × complement n ns2 (DensityOf P)))) as r1.
     apply Rplus_le_compat_l.
     apply IHst1.
     apply E_Meas.
-    assert (Hbev2: beval (mergeMaps (fst a) (x !-> 1%nat; StateOf P))
-    (PropOf (AssertPreMeas P x 1 m)) = false).
-    rewrite equal_props.
-    rewrite equivalent_with_respect_to_x. apply bev2.
-    rewrite Hbev2.
-    simpl.
-    remember (fst (trace
-       (complement ns2 n
+    assert (Hbev1: beval (mergeMaps (x !-> 1%nat; fst a) (StateOf P)) (PropOf P) = false).
+    rewrite equal_props in bev1.
+    rewrite equivalent_with_respect_to_x in bev1.
+    apply bev1.
+    rewrite Hbev1.
+    destruct (beval (mergeMaps (x !-> 0%nat; fst a) (StateOf P)) (PropOf P)) eqn:bev2.
+    remember (fst (trace (complement ns2 n
           (GetMeasurementBasis (ns2 - 1) m true × snd a
            × (GetMeasurementBasis (ns2 - 1) m true) †)
-        × complement n ns2 (DensityOf P)))) as r1.
+        × complement n ns2 (DensityOf P))) ) as r1.
     eapply Rlt_trans_eq.
     apply IHst1.
     apply E_Meas.
     apply Rplus_le_sum_0.
     rewrite Heqr1.
     apply positive_trace.
-    assert (Hbev1: beval (mergeMaps (fst a) (x !-> 0%nat; StateOf P))
-    (PropOf (AssertPreMeas P x 0 m)) = false).
-    rewrite equal_props.
-    rewrite equivalent_with_respect_to_x. apply bev1.
+    apply IHst1.
+    apply E_Meas.
+    - unfold hoare_triple.
+    intros.
+    inversion H.
+    subst.
+    induction st1.
+    simpl. lra.
+    simpl.
+    destruct (beval (mergeMaps (fst a) (x !-> 0%nat; StateOf P))
+    (PropOf (AssertPreMeas P x 0 m))) eqn:bev1.
+    assert (Hbev1: beval (mergeMaps (x !-> 0%nat; fst a) (StateOf P)) (PropOf P) = true).
+    rewrite equal_props in bev1.
+    rewrite equivalent_with_respect_to_x in bev1.
+    apply bev1.
     rewrite Hbev1.
     destruct (beval (mergeMaps (x !-> 1%nat; fst a) (StateOf P)) (PropOf P)) eqn:bev2.
-    assert (Hbev2: beval (mergeMaps (fst a) (x !-> 1%nat; StateOf P))
-    (PropOf (AssertPreMeas P x 1 m)) = true).
-    rewrite equal_props.
-    rewrite equivalent_with_respect_to_x. apply bev2.
-    rewrite Hbev2.
-    simpl.
-    remember (fst (trace
-       (complement ns2 n
-          (GetMeasurementBasis (ns2 - 1) m false × snd a
-           × (GetMeasurementBasis (ns2 - 1) m false) †)
-        × complement n ns2 (DensityOf P)))) as r1.
+    rewrite equal_traces_meas.
+    apply Rplus_le_compat_l.
     eapply Rlt_trans_eq.
     apply IHst1.
     apply E_Meas.
-    apply Rplus_le_sum_0.
-    rewrite Heqr1.
+    eapply Rplus_le_sum_0.
     apply positive_trace.
-    assert (Hbev2: beval (mergeMaps (fst a) (x !-> 1%nat; StateOf P))
-    (PropOf (AssertPreMeas P x 1 m)) = false).
-    rewrite equal_props.
-    rewrite equivalent_with_respect_to_x. apply bev2.
-    rewrite Hbev2.
-    simpl.
+    rewrite equal_traces_meas.
+    apply Rplus_le_compat_l.
+    apply IHst1.
+    apply E_Meas.
+    assert (Hbev1: beval (mergeMaps (x !-> 0%nat; fst a) (StateOf P)) (PropOf P) = false).
+    rewrite equal_props in bev1.
+    rewrite equivalent_with_respect_to_x in bev1.
+    apply bev1.
+    rewrite Hbev1.
+    destruct (beval (mergeMaps (x !-> 1%nat; fst a) (StateOf P)) (PropOf P)) eqn:bev2.
+    eapply Rlt_trans_eq.
+    apply IHst1.
+    apply E_Meas.
+    eapply Rplus_le_sum_0.
+    apply positive_trace.
     apply IHst1.
     apply E_Meas.
 Qed.
 
-Theorem fy_while: forall n b c P,
-    hoare_triple n n (AssertPreIfTrue P b) c P ->
-    hoare_triple n n P <{ while b do c end }>  (AssertPreIfTrue P (BNot b)).
+Theorem fy_while: forall n b c (P: Assertion n),
+    hoare_triple (AssertPreIfTrue P b) c P ->
+    hoare_triple P <{ while b do c end }>  (AssertPreIfTrue P (BNot b)).
 Proof.
     unfold hoare_triple.
     intros.
@@ -844,11 +728,11 @@ Proof.
     apply H in H5.
 Admitted.
 
-Theorem fy_weakness: forall n c P Q P' Q',
-    hoare_triple n n P c Q ->
+Theorem fy_weakness: forall n c (P Q P' Q': Assertion n),
+    hoare_triple P c Q ->
     (forall ns (st: list (total_map nat * Unitary (2 ^ ns))), weaker ns n n st P' P) ->
     (forall ns (st: list (total_map nat * Unitary (2 ^ ns))), weaker ns n n st Q Q') ->
-    hoare_triple n n P' c Q'.
+    hoare_triple P' c Q'.
 Proof.
     unfold hoare_triple, weaker.
     intros.
@@ -922,11 +806,11 @@ Proof.
     reflexivity.
 Qed.
 
-Theorem fy_imp_pre: forall n c P Q P',
-    hoare_triple n n P c Q ->
+Theorem fy_imp_pre: forall n c (P Q P': Assertion n),
+    hoare_triple P c Q ->
     (DensityOf P) = (DensityOf P') ->
     classicalPropsImp n n P' P ->
-    hoare_triple n n P' c Q.
+    hoare_triple P' c Q.
 Proof.
     unfold hoare_triple.
     intros.
@@ -941,11 +825,11 @@ Proof.
     apply H2.
 Qed.
 
-Theorem fy_imp_post: forall n c P Q Q',
-    hoare_triple n n P c Q ->
+Theorem fy_imp_post: forall n c (P Q Q': Assertion n),
+    hoare_triple P c Q ->
     (DensityOf Q) = (DensityOf Q') ->
     classicalPropsImp n n Q Q' ->
-    hoare_triple n n P c Q'.
+    hoare_triple P c Q'.
 Proof.
     unfold hoare_triple.
     intros.

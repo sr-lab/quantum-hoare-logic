@@ -146,15 +146,18 @@ Admitted.
 () -> (X < 0.5) * (I 2)
 *)
 
-Definition Prog2 : com :=
+Example Prog2 : com :=
   <{ new_qubit;
+     new_qubit;
      q 0 *= GH;
      X :=meas 0%nat;
-     if false then
-        q 0 *= GZ
+     if X == (0 % nat) then
+        q 1 *= GX
      else
         skip
-    end }>.
+     end;
+     Y :=meas 1%nat   
+  }>.
 Print Prog2.
 
 Definition Prog3 : com :=
