@@ -24,7 +24,7 @@ Fact calc_1: 0.5 * ∣1⟩⟨1∣ = ∣1⟩⟨1∣ × (H × ∣0⟩⟨0∣ × (H
 Proof. Admitted.
 
 Theorem operational_sem: 
-  ceval 0%nat 1%nat Prog [(( _ !-> 0%nat), I 1)] 
+  ceval 0 1 Prog [(( _ !-> 0%nat), I 1)] 
   [(( X !-> 0%nat; _ !-> 0%nat), 0.5 * ∣0⟩⟨0∣ );
    (( X !-> 1%nat; _ !-> 0%nat), 0.5 * ∣1⟩⟨1∣ )].
 Proof.
@@ -39,15 +39,15 @@ Proof.
     eapply E_Meas.
 Qed.
 
-Definition pre : Assertion 0%nat := ((_ !-> 0%nat), (BTrue, I 1)).
-Definition post : Assertion 1%nat := ((_ !-> 0%nat), (<{ X == (0 % nat)}>, 0.5 * ∣0⟩⟨0∣)).
+Definition pre : Assertion 0 := ((_ !-> 0%nat), (BTrue, I 1)).
+Definition post : Assertion 1 := ((_ !-> 0%nat), (<{ X == (0 % nat)}>, 0.5 * ∣0⟩⟨0∣)).
 
 Lemma pre_is_init_sub: pre = (init_sub 1 (AssertionOf 1%nat (StateOf pre) (PropOf pre) (∣0⟩⟨0∣))).
 Proof. Admitted.
 
 Lemma assrt_is_apply_sub: 
 (AssertionOf 1 (StateOf pre) (PropOf pre) ∣0⟩⟨0∣)
-= (apply_sub 1 (geval GH) 
+= (apply_sub 1 0 (geval GH) 
 (AssertionOf 1 (StateOf pre) (PropOf pre) (H × ∣0⟩⟨0∣ × (H) †))) .
 Proof. Admitted.
 
@@ -60,7 +60,7 @@ Proof.
     apply fy_init.
     apply H1.
     eapply fy_sequence.
-    assert (H2: hoare_triple (apply_sub 1 (geval GH) 
+    assert (H2: hoare_triple (apply_sub 1 0 (geval GH) 
     (AssertionOf 1 (StateOf pre) (PropOf pre) (H × ∣0⟩⟨0∣ × (H) †))) 
     <{ q 0 *= GH }> (AssertionOf 1 (StateOf pre) (PropOf pre) (Utils.H × ∣0⟩⟨0∣ × Utils.H†))).
     apply fy_apply.
@@ -69,18 +69,9 @@ Proof.
     eapply fy_weakness.
     remember (AssertionOf 1%nat (_ !-> 0%nat)
       <{ X == (0 % nat) }> (H × ∣0⟩⟨0∣ × (H) †)) as pm.
-    assert (H8: hoare_triple (conjunction 
-        (AssertPreMeas (AssertionOf 1%nat (_ !-> 0%nat)
-        <{ X == (0 % nat) }> (H × ∣0⟩⟨0∣ × (H) †)) X 0%nat 0%nat) 
-        (AssertPreMeas (AssertionOf 1%nat (_ !-> 0%nat)
-        <{ X == (0 % nat) }> (H × ∣0⟩⟨0∣ × (H) †)) X 1%nat 0%nat))  
-        <{ X :=meas 0 }> 
-        (AssertionOf 1%nat (_ !-> 0%nat)
-        <{ X == (0 % nat) }> (H × ∣0⟩⟨0∣ × (H) †))).
     apply fy_measure.
-    apply H8.
     intros.
-    unfold weaker, AssertionWithDensity, conjunction,
+    unfold weaker,
      AssertPreMeas, AssertionOf.
     simpl.
     unfold PropOf, DensityOf, StateOf.

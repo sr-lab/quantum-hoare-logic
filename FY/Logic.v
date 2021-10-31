@@ -81,20 +81,19 @@ Definition AssertPreAsgn {n} (P: Assertion n) (x: string)
  (e: nat) : Assertion n := (pair (x !-> e; _ !-> 0%nat)
  (pair (PropOf P) (DensityOf P))).
 
-Theorem eq_maps: forall x e a,
-mergeMaps (x !-> e; a) (_ !-> 0%nat)
- = mergeMaps (a) (x !-> e; _ !-> 0%nat).
+Theorem eq_maps_props: forall n x e a (P: Assertion n),
+beval (mergeMaps (a) (x !-> e; _ !-> 0%nat)) (PropOf P)
+ = beval (mergeMaps (x !-> e; a) (StateOf P)) (PropOf P).
 Proof.
 (* TODO *)
 Admitted.
 
 Theorem fy_assign: forall n x e (P: Assertion n), 
-    StateOf P =  t_empty 0%nat ->
     hoare_triple (AssertPreAsgn P x e) <{ x := e }> P.
 Proof.
     unfold hoare_triple.
     intros.
-    inversion H0.
+    inversion H.
     subst.
     right.
     induction st1.
@@ -107,8 +106,7 @@ Proof.
     unfold AssertPreAsgn, DensityOf. simpl. reflexivity.
     rewrite PAPAP.
     rewrite APAEA.
-    rewrite H.
-    rewrite eq_maps.
+    rewrite eq_maps_props.
     destruct (beval (mergeMaps (fst a) (x !-> e; _ !-> 0%nat)) (PropOf P)) eqn:bev1.
     rewrite IHst1.
     reflexivity.
@@ -389,7 +387,7 @@ Theorem equal_traces_apply: forall (n ns m: nat) (G: Unitary 2)
 fst
    (trace
       ((complement ns n a)
-       × (complement n ns (DensityOf (apply_sub n G P)))))
+       × (complement n ns (DensityOf (apply_sub n m G P)))))
 =
 fst
    (trace
@@ -404,7 +402,7 @@ Theorem equal_traces_apply_cnot: forall (n ns m: nat) (G: Unitary 2)
 fst
    (trace
       ((complement ns n a)
-       × (complement n ns (DensityOf (apply_sub n G P)))))
+       × (complement n ns (DensityOf (apply_sub n m G P)))))
 =
 fst
    (trace
@@ -415,7 +413,7 @@ Proof.
 Admitted.
 
 Theorem fy_apply: forall n m G (P: Assertion n), 
-    hoare_triple (apply_sub n (geval G) P) <{ q m *= G }> P.
+    hoare_triple (apply_sub n m (geval G) P) <{ q m *= G }> P.
 Proof.
     unfold hoare_triple.
     intros.
@@ -427,7 +425,7 @@ Proof.
     destruct G.
     rewrite applyPropOne.
     simpl.
-    destruct (beval (mergeMaps (fst a) (StateOf P)) (PropOf (apply_sub n Utils.H P))) eqn:bev1.
+    destruct (beval (mergeMaps (fst a) (StateOf P)) (PropOf (apply_sub n m Utils.H P))) eqn:bev1.
     assert (bev2: beval (mergeMaps (fst a) (StateOf P)) (PropOf P) = true).
     unfold apply_sub, PropOf in bev1. simpl in bev1. apply bev1.
     rewrite bev2.
@@ -447,7 +445,7 @@ Proof.
     left. auto.
     rewrite applyPropOne.
     simpl.
-    destruct (beval (mergeMaps (fst a) (StateOf P)) (PropOf (apply_sub n Utils.X P))) eqn:bev1.
+    destruct (beval (mergeMaps (fst a) (StateOf P)) (PropOf (apply_sub n m Utils.X P))) eqn:bev1.
     assert (bev2: beval (mergeMaps (fst a) (StateOf P)) (PropOf P) = true).
     unfold apply_sub, PropOf in bev1. simpl in bev1. apply bev1.
     rewrite bev2.
@@ -467,7 +465,7 @@ Proof.
     right. right. auto.
     rewrite applyPropOne.
     simpl.
-    destruct (beval (mergeMaps (fst a) (StateOf P)) (PropOf (apply_sub n Utils.Y P))) eqn:bev1.
+    destruct (beval (mergeMaps (fst a) (StateOf P)) (PropOf (apply_sub n m Utils.Y P))) eqn:bev1.
     assert (bev2: beval (mergeMaps (fst a) (StateOf P)) (PropOf P) = true).
     unfold apply_sub, PropOf in bev1. simpl in bev1. apply bev1.
     rewrite bev2.
@@ -487,7 +485,7 @@ Proof.
     right. right. right. auto.
     rewrite applyPropOne.
     simpl.
-    destruct (beval (mergeMaps (fst a) (StateOf P)) (PropOf (apply_sub n Utils.Z P))) eqn:bev1.
+    destruct (beval (mergeMaps (fst a) (StateOf P)) (PropOf (apply_sub n m Utils.Z P))) eqn:bev1.
     assert (bev2: beval (mergeMaps (fst a) (StateOf P)) (PropOf P) = true).
     unfold apply_sub, PropOf in bev1. simpl in bev1. apply bev1.
     rewrite bev2.
@@ -507,7 +505,7 @@ Proof.
     right. right. right. right. auto.
     rewrite applyPropOne.
     simpl.
-    destruct (beval (mergeMaps (fst a) (StateOf P)) (PropOf (apply_sub n (I 2) P))) eqn:bev1.
+    destruct (beval (mergeMaps (fst a) (StateOf P)) (PropOf (apply_sub n m (I 2) P))) eqn:bev1.
     assert (bev2: beval (mergeMaps (fst a) (StateOf P)) (PropOf P) = true).
     unfold apply_sub, PropOf in bev1. simpl in bev1. apply bev1.
     rewrite bev2.
@@ -527,7 +525,7 @@ Proof.
     right. auto.
     rewrite applyPropTwo.
     simpl.
-    destruct (beval (mergeMaps (fst a) (StateOf P)) (PropOf (apply_sub n CNOT P))) eqn:bev1.
+    destruct (beval (mergeMaps (fst a) (StateOf P)) (PropOf (apply_sub n m CNOT P))) eqn:bev1.
     assert (bev2: beval (mergeMaps (fst a) (StateOf P)) (PropOf P) = true).
     unfold apply_sub, PropOf in bev1. simpl in bev1. apply bev1.
     rewrite bev2.

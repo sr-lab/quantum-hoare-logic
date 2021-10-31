@@ -12,10 +12,7 @@ Definition X1 : string := "X1".
 
 Definition TELEPORT : com :=
   <{ 
-     new_qubit;
-     new_qubit;
      q 1 *= GH;
-     new_qubit;
      q 1 2 *= GCNOT;
      q 0 1 *= GCNOT;
      q 0 *= GH;
@@ -31,23 +28,25 @@ Definition TELEPORT : com :=
 
 Print TELEPORT.
 
-Theorem final_state: ceval 0%nat 3%nat TELEPORT 
-[(( _ !-> 0%nat), I 1) ] [(( _ !-> 0%nat), I 1)] .
+Definition initial_state (a b: R) := (∣0⟩ ⊗ ∣0⟩ ⊗ (a * ∣0⟩ + b * ∣1⟩)) × ((a^* * ⟨1∣ + b^* * ⟨1∣) ⊗ ⟨0∣ ⊗ ⟨0∣).
+
+Fixpoint satisfied_by_all_elements (n: nat) (state: State n) 
+  (P: bool_exp) : bool := match state with
+  | [] => true
+  | el :: st => andb (beval (fst el) P) (satisfied_by_all_elements n st P)
+  end.
+
+
+Theorem final_state: forall (a b: R),
+ceval 3 3 TELEPORT 
+[(( _ !-> 0%nat), (initial_state a b)) ] [] .
 Proof.
-    eapply E_Seq.
-    apply E_Init.
-    simpl.
-    eapply E_Seq.
-    apply E_Init.
-    simpl.
+  intros.
     eapply E_Seq.
     apply E_AppOne.
     simpl.
     eapply E_Seq.
     simpl.
-    apply E_Init.
-    simpl.
-    eapply E_Seq.
     apply E_AppTwo.
     simpl.
     eapply E_Seq.
