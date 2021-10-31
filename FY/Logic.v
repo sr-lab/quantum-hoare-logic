@@ -19,6 +19,19 @@ Definition hoare_triple
     (Expectation ns1 np st1 P) 
      <= (Expectation ns2 nq st2 Q).
 
+Definition total_hoare_triple 
+    {np nq: nat}
+    (P : Assertion np) 
+    (c : com) 
+    (Q : Assertion nq): Prop :=
+    forall ns1 ns2 
+    (st1: list (total_map nat * Unitary (2 ^ ns1))) 
+    (st2: list (total_map nat * Unitary (2 ^ ns2))), 
+    (ceval ns1 ns2 c st1 st2) ->
+    (Expectation ns1 np st1 P) 
+     <= (Expectation ns2 nq st2 Q) + (fst (TracesSum ns1 st1))
+                            - (fst (TracesSum ns2 st2)).
+
 Theorem fy_skip: forall n (P: Assertion n), 
    hoare_triple P <{skip}> P.
 Proof.

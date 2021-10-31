@@ -18,7 +18,8 @@ Definition Prog : com :=
 Print Prog.
 
 Fact calc_0: 0.5 * ∣0⟩⟨0∣ = ∣0⟩⟨0∣ × (H × ∣0⟩⟨0∣ × (H) †) × (∣0⟩⟨0∣)†.
-Proof. Admitted.
+Proof. 
+Admitted.
 
 Fact calc_1: 0.5 * ∣1⟩⟨1∣ = ∣1⟩⟨1∣ × (H × ∣0⟩⟨0∣ × (H) †) × (∣1⟩⟨1∣)†.
 Proof. Admitted.
@@ -40,7 +41,16 @@ Proof.
 Qed.
 
 Definition pre : Assertion 0 := ((_ !-> 0%nat), (BTrue, I 1)).
-Definition post : Assertion 1 := ((_ !-> 0%nat), (<{ X == (0 % nat)}>, 0.5 * ∣0⟩⟨0∣)).
+Definition post : Assertion 1 := ((_ !-> 0%nat), (<{ X == (0 % nat)}>, ∣0⟩⟨0∣)).
+
+Theorem exp: Expectation 1 1 [(( X !-> 0%nat; _ !-> 0%nat), 0.5 * ∣0⟩⟨0∣ );
+(( X !-> 1%nat; _ !-> 0%nat), 0.5 * ∣1⟩⟨1∣ )] post = 0.5.
+Proof.
+  unfold Expectation, post.
+  simpl.
+  field_simplify.
+  lra.
+Qed.
 
 Lemma pre_is_init_sub: pre = (init_sub 1 (AssertionOf 1%nat (StateOf pre) (PropOf pre) (∣0⟩⟨0∣))).
 Proof. Admitted.

@@ -233,3 +233,12 @@ Proof.
     reflexivity.
 Qed.
 
+Example traces_sum: TracesSum 2%nat [(X !-> 1%nat; _ !-> 0%nat, H); (X !-> 1%nat; _ !-> 0%nat, Utils.X)] = 0.
+Proof.
+  unfold TracesSum.
+  simpl.
+  unfold H, Utils.X, trace.
+  simpl.
+  field_simplify.
+  lca.
+Admitted.

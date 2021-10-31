@@ -13,7 +13,7 @@ Inductive derivable:
   | H_Skip : forall n (P: Assertion n),
     derivable n n P <{ skip }> P
   | H_App : forall n G (P: Assertion n) m,
-    derivable n n (apply_sub n m (geval G) P) <{ q m *= G }> P
+    derivable n n (apply_sub n m (geval G) (is1 G) P) <{ q m *= G }> P
   | H_Init : forall n (P: Assertion n),
     derivable (n - 1)%nat n (init_sub n P) <{ new_qubit }> P
   | H_Asgn : forall n (P: Assertion n) x e,

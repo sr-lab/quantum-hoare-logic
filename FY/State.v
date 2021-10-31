@@ -110,3 +110,9 @@ Fixpoint FilterNeg (n : nat) (state: list ((total_map nat)*(Unitary (2^n)))) (b 
   | [] => []
   | st :: l => if (negb (beval (fst st) b)) then (st :: (FilterNeg n l b)) else (FilterNeg n l b)
   end.
+
+Fixpoint TracesSum (n: nat) (state: State n): C :=
+  match state with
+  | [] => 0
+  | st :: l => Cplus (trace (snd st)) (TracesSum n l)
+  end.
