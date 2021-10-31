@@ -23,8 +23,10 @@ Definition pre_init (n: nat) (m: Unitary (2^n))
 Definition init_sub (n: nat) (P : Assertion n) : Assertion (n - 1) := 
     pair (StateOf P) (pair (PropOf P) (pre_init n (DensityOf P))).
 
-Definition apply_sub n m (U: Unitary (2^n)) (P : Assertion n) : Assertion n :=
-  pair (StateOf P) (pair (PropOf P) ((padding n m U)† × (DensityOf P) × (padding n m U))). 
+Definition apply_sub n m (U: Unitary (2)) (is1: bool) (P : Assertion n) : Assertion n :=
+  if is1 then 
+     pair (StateOf P) (pair (PropOf P) ((padding (n - 1)%nat m U)† × (DensityOf P) × (padding (n - 1)%nat m U)))
+  else  pair (StateOf P) (pair (PropOf P) ((padding4 (n - 2)%nat m U)† × (DensityOf P) × (padding4 (n - 2)%nat m U))). 
 
 Definition AssertionOf (n: nat) (st: total_map nat) 
 (prop: bool_exp) (U: Unitary (2^n)) : Assertion n := 

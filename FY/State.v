@@ -55,6 +55,12 @@ Fixpoint padding (n : nat) (qubit : nat) (U : Unitary 2) : Unitary (2^(n + 1%nat
   | S n' => (padding n' qubit U) ⊗ (if qubit =? n then U else I 2)
   end. 
 
+Fixpoint padding4 (n : nat) (qubit : nat) (U : Unitary 4) : Unitary (2^(n + 2%nat)) :=
+  match n with 
+  | O%nat => (if qubit =? 0%nat then U else (I 2))
+  | S n' => (padding4 n' qubit U) ⊗ (if qubit =? n then U else I 2)
+  end. 
+
 Fixpoint UpdateStateInit (n : nat) (state: list ((total_map nat)*(Unitary (2^n)))) : list ((total_map nat)*(Unitary (2^(n + 1%nat)))) :=
   match state with
   | [] => []
@@ -68,7 +74,7 @@ Fixpoint UpdateStateApply (n : nat) (state: list ((total_map nat)*(Unitary (2^n)
   match state with
   | [] => []
   | st :: l => match U with
-      | GCNOT => (pair (fst st) ((padding (n - 2%nat) qubit (geval U)) × (snd st) × (padding (n - 2%nat) qubit (geval U))†) ) :: (UpdateStateApply n l qubit U)
+      | GCNOT => (pair (fst st) ((padding4 (n - 2%nat) qubit (geval U)) × (snd st) × (padding4 (n - 2%nat) qubit (geval U))†) ) :: (UpdateStateApply n l qubit U)
       | _ => (pair (fst st) ((padding (n - 1%nat) qubit (geval U)) × (snd st) × (padding (n - 1%nat) qubit (geval U))†) ) :: (UpdateStateApply n l qubit U)
     end
   end.

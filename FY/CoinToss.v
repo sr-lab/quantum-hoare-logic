@@ -47,7 +47,7 @@ Proof. Admitted.
 
 Lemma assrt_is_apply_sub: 
 (AssertionOf 1 (StateOf pre) (PropOf pre) ∣0⟩⟨0∣)
-= (apply_sub 1 0 (geval GH) 
+= (apply_sub 1 0 (geval GH) true
 (AssertionOf 1 (StateOf pre) (PropOf pre) (H × ∣0⟩⟨0∣ × (H) †))) .
 Proof. Admitted.
 
@@ -60,7 +60,7 @@ Proof.
     apply fy_init.
     apply H1.
     eapply fy_sequence.
-    assert (H2: hoare_triple (apply_sub 1 0 (geval GH) 
+    assert (H2: hoare_triple (apply_sub 1 0 (geval GH) true
     (AssertionOf 1 (StateOf pre) (PropOf pre) (H × ∣0⟩⟨0∣ × (H) †))) 
     <{ q 0 *= GH }> (AssertionOf 1 (StateOf pre) (PropOf pre) (Utils.H × ∣0⟩⟨0∣ × Utils.H†))).
     apply fy_apply.

@@ -342,9 +342,9 @@ Qed.
 Theorem applyPropCNOT: forall n m a st G,
 G = GCNOT ->
 (UpdateStateApply n (a :: st) m G) =
-(fst a, (padding (n - 2%nat) m (geval G)) 
+(fst a, (padding4 (n - 2%nat) m (geval G)) 
 × (snd a) 
-× (padding (n - 2%nat) m (geval G))†) 
+× (padding4 (n - 2%nat) m (geval G))†) 
 :: (UpdateStateApply n st m G).
 Proof.
     intros.
@@ -371,9 +371,9 @@ Qed.
 Theorem applyPropTwo: forall n m a st G,
 G = GCNOT ->
 (UpdateStateApply n (a :: st) m G) =
-(fst a, (padding (n - 2%nat) m (geval G)) 
+(fst a, (padding4 (n - 2%nat) m (geval G)) 
 × (snd a) 
-× (padding (n - 2%nat) m (geval G))†) 
+× (padding4 (n - 2%nat) m (geval G))†) 
 :: (UpdateStateApply n st m G).
 Proof.
     intros.
@@ -386,8 +386,10 @@ Theorem equal_traces_apply: forall (n ns m: nat) (G: Unitary 2)
 (P: Assertion n) (a: Unitary (2^ns)),
 fst
    (trace
-      ((complement ns n a)
-       × (complement n ns (DensityOf (apply_sub n m G P)))))
+      (complement ns n a
+       × complement n ns
+           ((padding (n - 1) m G) † × snd (snd P)
+            × padding (n - 1) m G)))
 =
 fst
    (trace
@@ -401,19 +403,25 @@ Theorem equal_traces_apply_cnot: forall (n ns m: nat) (G: Unitary 2)
 (P: Assertion n) (a: Unitary (2^ns)),
 fst
    (trace
-      ((complement ns n a)
-       × (complement n ns (DensityOf (apply_sub n m G P)))))
+      (complement ns n a
+       × complement n ns
+           ((padding4 (n - 2) m CNOT) † × snd (snd P) × padding4 (n - 2) m CNOT)))
 =
 fst
    (trace
-      ((complement ns n ((padding (ns - 2) m G) × a
-          × (padding (ns - 2) m G) †))
+      ((complement ns n ((padding4 (ns - 2) m G) × a
+          × (padding4 (ns - 2) m G) †))
        × (complement n ns (DensityOf P)))).
 Proof.
 Admitted.
 
+Definition is1 (G: gate_exp): bool := match G with 
+   | GCNOT => false
+   | _ => true 
+end.
+
 Theorem fy_apply: forall n m G (P: Assertion n), 
-    hoare_triple (apply_sub n m (geval G) P) <{ q m *= G }> P.
+    hoare_triple (apply_sub n m (geval G) (is1 G) P) <{ q m *= G }> P.
 Proof.
     unfold hoare_triple.
     intros.
@@ -425,121 +433,157 @@ Proof.
     destruct G.
     rewrite applyPropOne.
     simpl.
-    destruct (beval (mergeMaps (fst a) (StateOf P)) (PropOf (apply_sub n m Utils.H P))) eqn:bev1.
-    assert (bev2: beval (mergeMaps (fst a) (StateOf P)) (PropOf P) = true).
-    unfold apply_sub, PropOf in bev1. simpl in bev1. apply bev1.
-    rewrite bev2.
+    destruct (beval (mergeMaps (fst a) (StateOf P)) (PropOf P)) eqn:bev1.
+    unfold PropOf, DensityOf. simpl. unfold PropOf in bev1.
+    rewrite bev1.
     rewrite (equal_traces_apply n ns2 m Utils.H P (snd a)).
     replace (Utils.H) with (geval GH).
+    unfold apply_sub, PropOf, DensityOf in IHst1.
+    assert (bis1: is1 GH = true). auto.
+    rewrite bis1 in IHst1.
     rewrite IHst1.
     reflexivity.
     apply E_AppOne.
     simpl. reflexivity.
-    assert (bev2: beval (mergeMaps (fst a) (StateOf P)) (PropOf P) = false).
-    unfold apply_sub, PropOf in bev1. simpl in bev1. apply bev1.
-    rewrite bev2.
+    unfold PropOf. simpl.
+    unfold PropOf in bev1.
+    rewrite bev1.
+    unfold apply_sub, PropOf in IHst1. 
     replace (Utils.H) with (geval GH).
-    rewrite IHst1. reflexivity.
+    assert (bis1: is1 GH = true). auto.
+    rewrite bis1 in IHst1.
+    rewrite IHst1.
+    reflexivity.
     apply E_AppOne.
     simpl. reflexivity.
     left. auto.
     rewrite applyPropOne.
     simpl.
-    destruct (beval (mergeMaps (fst a) (StateOf P)) (PropOf (apply_sub n m Utils.X P))) eqn:bev1.
-    assert (bev2: beval (mergeMaps (fst a) (StateOf P)) (PropOf P) = true).
-    unfold apply_sub, PropOf in bev1. simpl in bev1. apply bev1.
-    rewrite bev2.
+    destruct (beval (mergeMaps (fst a) (StateOf P)) (PropOf P)) eqn:bev1.
+    unfold PropOf, DensityOf. simpl. unfold PropOf in bev1.
+    rewrite bev1.
     rewrite (equal_traces_apply n ns2 m Utils.X P (snd a)).
     replace (Utils.X) with (geval GX).
+    unfold apply_sub, PropOf, DensityOf in IHst1.
+    assert (bis1: is1 GX = true). auto.
+    rewrite bis1 in IHst1.
     rewrite IHst1.
     reflexivity.
     apply E_AppOne.
     simpl. reflexivity.
-    assert (bev2: beval (mergeMaps (fst a) (StateOf P)) (PropOf P) = false).
-    unfold apply_sub, PropOf in bev1. simpl in bev1. apply bev1.
-    rewrite bev2.
+    unfold PropOf. simpl.
+    unfold PropOf in bev1.
+    rewrite bev1.
+    unfold apply_sub, PropOf in IHst1. 
     replace (Utils.X) with (geval GX).
-    rewrite IHst1. reflexivity.
+    assert (bis1: is1 GX = true). auto.
+    rewrite bis1 in IHst1.
+    rewrite IHst1.
+    reflexivity.
     apply E_AppOne.
     simpl. reflexivity.
     right. right. auto.
     rewrite applyPropOne.
     simpl.
-    destruct (beval (mergeMaps (fst a) (StateOf P)) (PropOf (apply_sub n m Utils.Y P))) eqn:bev1.
-    assert (bev2: beval (mergeMaps (fst a) (StateOf P)) (PropOf P) = true).
-    unfold apply_sub, PropOf in bev1. simpl in bev1. apply bev1.
-    rewrite bev2.
+    destruct (beval (mergeMaps (fst a) (StateOf P)) (PropOf P)) eqn:bev1.
+    unfold PropOf, DensityOf. simpl. unfold PropOf in bev1.
+    rewrite bev1.
     rewrite (equal_traces_apply n ns2 m Utils.Y P (snd a)).
     replace (Utils.Y) with (geval GY).
+    unfold apply_sub, PropOf, DensityOf in IHst1.
+    assert (bis1: is1 GY = true). auto.
+    rewrite bis1 in IHst1.
     rewrite IHst1.
     reflexivity.
     apply E_AppOne.
     simpl. reflexivity.
-    assert (bev2: beval (mergeMaps (fst a) (StateOf P)) (PropOf P) = false).
-    unfold apply_sub, PropOf in bev1. simpl in bev1. apply bev1.
-    rewrite bev2.
+    unfold PropOf. simpl.
+    unfold PropOf in bev1.
+    rewrite bev1.
+    unfold apply_sub, PropOf in IHst1. 
     replace (Utils.Y) with (geval GY).
-    rewrite IHst1. reflexivity.
+    assert (bis1: is1 GY = true). auto.
+    rewrite bis1 in IHst1.
+    rewrite IHst1.
+    reflexivity.
     apply E_AppOne.
     simpl. reflexivity.
     right. right. right. auto.
     rewrite applyPropOne.
     simpl.
-    destruct (beval (mergeMaps (fst a) (StateOf P)) (PropOf (apply_sub n m Utils.Z P))) eqn:bev1.
-    assert (bev2: beval (mergeMaps (fst a) (StateOf P)) (PropOf P) = true).
-    unfold apply_sub, PropOf in bev1. simpl in bev1. apply bev1.
-    rewrite bev2.
+    destruct (beval (mergeMaps (fst a) (StateOf P)) (PropOf P)) eqn:bev1.
+    unfold PropOf, DensityOf. simpl. unfold PropOf in bev1.
+    rewrite bev1.
     rewrite (equal_traces_apply n ns2 m Utils.Z P (snd a)).
     replace (Utils.Z) with (geval GZ).
+    unfold apply_sub, PropOf, DensityOf in IHst1.
+    assert (bis1: is1 GZ = true). auto.
+    rewrite bis1 in IHst1.
     rewrite IHst1.
     reflexivity.
     apply E_AppOne.
     simpl. reflexivity.
-    assert (bev2: beval (mergeMaps (fst a) (StateOf P)) (PropOf P) = false).
-    unfold apply_sub, PropOf in bev1. simpl in bev1. apply bev1.
-    rewrite bev2.
+    unfold PropOf. simpl.
+    unfold PropOf in bev1.
+    rewrite bev1.
+    unfold apply_sub, PropOf in IHst1. 
     replace (Utils.Z) with (geval GZ).
-    rewrite IHst1. reflexivity.
+    assert (bis1: is1 GZ = true). auto.
+    rewrite bis1 in IHst1.
+    rewrite IHst1.
+    reflexivity.
     apply E_AppOne.
     simpl. reflexivity.
     right. right. right. right. auto.
     rewrite applyPropOne.
     simpl.
-    destruct (beval (mergeMaps (fst a) (StateOf P)) (PropOf (apply_sub n m (I 2) P))) eqn:bev1.
-    assert (bev2: beval (mergeMaps (fst a) (StateOf P)) (PropOf P) = true).
-    unfold apply_sub, PropOf in bev1. simpl in bev1. apply bev1.
-    rewrite bev2.
+    destruct (beval (mergeMaps (fst a) (StateOf P)) (PropOf P)) eqn:bev1.
+    unfold PropOf, DensityOf. simpl. unfold PropOf in bev1.
+    rewrite bev1.
     rewrite (equal_traces_apply n ns2 m (I 2) P (snd a)).
     replace (I 2) with (geval GI).
+    unfold apply_sub, PropOf, DensityOf in IHst1.
+    assert (bis1: is1 GI = true). auto.
+    rewrite bis1 in IHst1.
     rewrite IHst1.
     reflexivity.
     apply E_AppOne.
     simpl. reflexivity.
-    assert (bev2: beval (mergeMaps (fst a) (StateOf P)) (PropOf P) = false).
-    unfold apply_sub, PropOf in bev1. simpl in bev1. apply bev1.
-    rewrite bev2.
+    unfold PropOf. simpl.
+    unfold PropOf in bev1.
+    rewrite bev1.
+    unfold apply_sub, PropOf in IHst1. 
     replace (I 2) with (geval GI).
-    rewrite IHst1. reflexivity.
+    assert (bis1: is1 GI = true). auto.
+    rewrite bis1 in IHst1.
+    rewrite IHst1.
+    reflexivity.
     apply E_AppOne.
     simpl. reflexivity.
     right. auto.
     rewrite applyPropTwo.
     simpl.
-    destruct (beval (mergeMaps (fst a) (StateOf P)) (PropOf (apply_sub n m CNOT P))) eqn:bev1.
-    assert (bev2: beval (mergeMaps (fst a) (StateOf P)) (PropOf P) = true).
-    unfold apply_sub, PropOf in bev1. simpl in bev1. apply bev1.
-    rewrite bev2.
+    destruct (beval (mergeMaps (fst a) (StateOf P)) (PropOf P)) eqn:bev1.
+    unfold PropOf, DensityOf. simpl. unfold PropOf in bev1.
+    rewrite bev1.
     rewrite (equal_traces_apply_cnot n ns2 m (CNOT) P (snd a)).
     replace (CNOT) with (geval GCNOT).
+    unfold apply_sub, PropOf, DensityOf in IHst1.
+    assert (bis1: is1 GCNOT = false). auto.
+    rewrite bis1 in IHst1.
     rewrite IHst1.
     reflexivity.
     apply E_AppOne.
     simpl. reflexivity.
-    assert (bev2: beval (mergeMaps (fst a) (StateOf P)) (PropOf P) = false).
-    unfold apply_sub, PropOf in bev1. simpl in bev1. apply bev1.
-    rewrite bev2.
-    replace CNOT with (geval GCNOT).
-    rewrite IHst1. reflexivity.
+    unfold PropOf. simpl.
+    unfold PropOf in bev1.
+    rewrite bev1.
+    unfold apply_sub, PropOf in IHst1. 
+    replace (CNOT) with (geval GCNOT).
+    assert (bis1: is1 GCNOT = false). auto.
+    rewrite bis1 in IHst1.
+    rewrite IHst1.
+    reflexivity.
     apply E_AppOne.
     simpl. reflexivity.
     auto.

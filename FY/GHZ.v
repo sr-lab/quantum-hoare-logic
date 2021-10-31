@@ -16,8 +16,8 @@ Definition GHZ : com :=
      new_qubit;
      new_qubit;
      q 0 *= GH;
-     q 0 1 *= GCNOT;
-     q 1 2 *= GCNOT;
+     q 0 (*1*) *= GCNOT;
+     q 1 (*2*) *= GCNOT;
      X0 :=meas 0;
      X1 :=meas 1;
      X2 :=meas 2;
@@ -140,10 +140,10 @@ Proof.
   eapply E_AppOne.
   simpl.
   eapply E_Seq.
-  eapply E_AppTwo.
+  eapply E_AppOne.
   simpl.
   eapply E_Seq.
-  eapply E_AppTwo.
+  eapply E_AppOne.
   simpl.
   eapply E_Seq.
   eapply E_Meas.
@@ -160,13 +160,147 @@ Abort.
 
 
 (* TODO : Swap gate+no cloning*)
-Definition P : Assertion 3 :=  (( _ !-> 0%nat), (<{ true }>, I 1)).
+Definition P : Assertion 0 :=  (( _ !-> 0%nat), (<{ true }>, I 1)).
 Definition Q : Assertion 3 :=  (( _ !-> 0%nat), (<{ X1 == X2 }>, I 3)).
+
+Lemma H4: (I 2 ⊗ CNOT) × (CNOT ⊗ I 2) × (H ⊗ I 2 ⊗ I 2)
+      × (∣ 0 ⟩ ⊗ (∣ 0 ⟩ ⊗ ∣0⟩⟨0∣ ⊗ ⟨0∣) ⊗ ⟨0∣) × (H ⊗ I 2 ⊗ I 2) †
+      × (CNOT ⊗ I 2) † × (I 2 ⊗ CNOT) † = l2M [[1/2;0;0;0;0;0;0;1/2];
+[0;0;0;0;0;0;0;0];
+[0;0;0;0;0;0;0;0];
+[0;0;0;0;0;0;0;0];
+[0;0;0;0;0;0;0;0];
+[0;0;0;0;0;0;0;0];
+[0;0;0;0;0;0;0;0];
+[1/2;0;0;0;0;0;0;1/2]].
+Proof.
+(* BY PYTHON SCRIPT *)
+Admitted.
 
 Theorem ghz_equality_end: hoare_triple P GHZ Q.
 Proof.
   intros.
   eapply fy_sequence.
+  replace P with (init_sub 1 (AssertionOf 1 (StateOf P) (PropOf P) (∣0⟩⟨0∣))).
+  assert (hoare_triple (init_sub 1 (AssertionOf 1 (StateOf P) (PropOf P) ∣0⟩⟨0∣))
+  <{ new_qubit }> (AssertionOf 1 (StateOf P) (PropOf P) (∣0⟩⟨0∣))).
+  apply fy_init.
+  apply H.
+  unfold init_sub, AssertionOf, P, DensityOf, StateOf, PropOf. 
+  simpl.
+  assert (Hinit: pre_init 1 ∣0⟩⟨0∣ = I 1).
+  unfold pre_init, base1, base2. simpl. admit.
+  rewrite Hinit.
+  reflexivity.
+  eapply fy_sequence.
+  remember (AssertionOf 1 (StateOf P) (PropOf P) ∣0⟩⟨0∣) as P1.
+  replace P1 with (init_sub 2 (AssertionOf 2 (StateOf P) (PropOf P) (∣0⟩⊗ (∣0⟩⟨0∣) ⊗⟨0∣))).
+  assert (hoare_triple (init_sub 2 (AssertionOf 2 (StateOf P) (PropOf P) (∣0⟩⊗(∣0⟩⟨0∣)⊗⟨0∣)))
+  <{ new_qubit }> (AssertionOf 2 (StateOf P) (PropOf P) (∣0⟩⊗(∣0⟩⟨0∣)⊗⟨0∣))).
+  apply fy_init.
+  apply H.
+  admit.
+  eapply fy_sequence.
+  remember  (AssertionOf 2 (StateOf P) (PropOf P) (∣ 0 ⟩ ⊗ ∣0⟩⟨0∣ ⊗ ⟨0∣)) as P1.
+  replace P1 with (init_sub 3 (AssertionOf 3 (StateOf P) (PropOf P) (∣0⟩⊗(∣0⟩⊗ (∣0⟩⟨0∣) ⊗⟨0∣)⊗⟨0∣))).
+  assert (hoare_triple (init_sub 3 
+  (AssertionOf 3 (StateOf P) (PropOf P) 
+  (∣0⟩⊗(∣0⟩⊗ (∣0⟩⟨0∣) ⊗⟨0∣)⊗⟨0∣)))
+  <{ new_qubit }>  
+  (AssertionOf 3 (StateOf P) (PropOf P) (∣0⟩⊗(∣0⟩⊗ (∣0⟩⟨0∣) ⊗⟨0∣)⊗⟨0∣))).
+  apply fy_init.
+  apply H.
+  admit.
+  eapply fy_sequence.
+  remember  (AssertionOf 3 (StateOf P) (PropOf P) 
+    (∣ 0 ⟩ ⊗ (∣ 0 ⟩ ⊗ ∣0⟩⟨0∣ ⊗ ⟨0∣) ⊗ ⟨0∣)) as P1.
+  replace P1 with (apply_sub 3%nat 0%nat Utils.H true 
+    (AssertionOf 3%nat (StateOf P) (PropOf P)
+     ((padding 2 0 Utils.H) 
+        × (∣ 0 ⟩ ⊗ (∣ 0 ⟩ ⊗ ∣0⟩⟨0∣ ⊗ ⟨0∣) ⊗ ⟨0∣) 
+          × (padding 2 0 Utils.H)†)) ).
+  assert (hoare_triple
+      (apply_sub 3%nat 0%nat Utils.H true
+         (AssertionOf 3%nat (StateOf P) (PropOf P)
+            ((padding 2 0 Utils.H) 
+               × (∣ 0 ⟩ ⊗ (∣ 0 ⟩ ⊗ ∣0⟩⟨0∣ ⊗ ⟨0∣) ⊗ ⟨0∣) 
+                  × (padding 2 0 Utils.H)†)) )
+      <{ q 0 *= GH }> 
+      (AssertionOf 3%nat (StateOf P) (PropOf P)
+            ((padding 2 0 Utils.H) 
+               × (∣ 0 ⟩ ⊗ (∣ 0 ⟩ ⊗ ∣0⟩⟨0∣ ⊗ ⟨0∣) ⊗ ⟨0∣) 
+                  × (padding 2 0 Utils.H)†))
+  ).
+  apply fy_apply.
+  apply H.
+  admit.
+  eapply fy_sequence.
+  remember (AssertionOf 3 (StateOf P) (PropOf P)
+  (padding 2 0 H × (∣ 0 ⟩ ⊗ (∣ 0 ⟩ ⊗ ∣0⟩⟨0∣ ⊗ ⟨0∣) ⊗ ⟨0∣)
+   × (padding 2 0 H) †)) as P1.
+  replace P1 with (apply_sub 3%nat 0%nat Utils.CNOT false
+    (AssertionOf 3%nat (StateOf P) (PropOf P)
+     ((padding4 1 0 Utils.CNOT) 
+         × (padding 2 0 Utils.H) 
+            × (∣ 0 ⟩ ⊗ (∣ 0 ⟩ ⊗ ∣0⟩⟨0∣ ⊗ ⟨0∣) ⊗ ⟨0∣) 
+               × (padding 2 0 Utils.H)† 
+                  × (padding4 1 0 Utils.CNOT)†)) ).
+  assert (hoare_triple 
+      (apply_sub 3%nat 0%nat Utils.CNOT false
+         (AssertionOf 3%nat (StateOf P) (PropOf P)
+            ((padding4 1 0 Utils.CNOT) 
+               × (padding 2 0 Utils.H) 
+                  × (∣ 0 ⟩ ⊗ (∣ 0 ⟩ ⊗ ∣0⟩⟨0∣ ⊗ ⟨0∣) ⊗ ⟨0∣) 
+                     × (padding 2 0 Utils.H)† 
+                  × (padding4 1 0 Utils.CNOT)†)) )
+      <{ q 0 (*1*) *= GCNOT }> 
+      (AssertionOf 3%nat (StateOf P) (PropOf P)
+            ((padding4 1 0 Utils.CNOT) 
+               × (padding 2 0 Utils.H) 
+                  × (∣ 0 ⟩ ⊗ (∣ 0 ⟩ ⊗ ∣0⟩⟨0∣ ⊗ ⟨0∣) ⊗ ⟨0∣) 
+                     × (padding 2 0 Utils.H)† 
+                  × (padding4 1 0 Utils.CNOT)†))).
+  apply fy_apply.
+  apply H.
+  admit.
+  eapply fy_sequence.
+  remember (AssertionOf 3 (StateOf P) (PropOf P)
+  ((padding4 1 0 CNOT) × (padding 2 0 H)
+   × (∣ 0 ⟩ ⊗ (∣ 0 ⟩ ⊗ ∣0⟩⟨0∣ ⊗ ⟨0∣) ⊗ ⟨0∣) × (padding 2 0 H) †
+   × (padding4 1 0 CNOT) †)) as P1.
+  replace P1 with (apply_sub 3%nat 1%nat Utils.CNOT false
+    (AssertionOf 3%nat (StateOf P) (PropOf P)
+     ((padding4 1 1 Utils.CNOT) 
+      × (padding4 1 0 Utils.CNOT) 
+         × (padding 2 0 Utils.H) 
+            × (∣ 0 ⟩ ⊗ (∣ 0 ⟩ ⊗ ∣0⟩⟨0∣ ⊗ ⟨0∣) ⊗ ⟨0∣) 
+               × (padding 2 0 Utils.H)† 
+                  × (padding4 1 0 Utils.CNOT)†
+                     × (padding4 1 1 Utils.CNOT)†)) ).
+  assert (hoare_triple 
+      (apply_sub 3%nat 1%nat Utils.CNOT false
+      (AssertionOf 3%nat (StateOf P) (PropOf P)
+       ((padding4 1 1 Utils.CNOT) 
+        × (padding4 1 0 Utils.CNOT) 
+           × (padding 2 0 Utils.H) 
+              × (∣ 0 ⟩ ⊗ (∣ 0 ⟩ ⊗ ∣0⟩⟨0∣ ⊗ ⟨0∣) ⊗ ⟨0∣) 
+                 × (padding 2 0 Utils.H)† 
+                    × (padding4 1 0 Utils.CNOT)†
+                       × (padding4 1 1 Utils.CNOT)†)) )
+      <{ q 1 *= GCNOT }> 
+      (AssertionOf 3%nat (StateOf P) (PropOf P)
+      ((padding4 1 1 Utils.CNOT) 
+       × (padding4 1 0 Utils.CNOT) 
+          × (padding 2 0 Utils.H) 
+             × (∣ 0 ⟩ ⊗ (∣ 0 ⟩ ⊗ ∣0⟩⟨0∣ ⊗ ⟨0∣) ⊗ ⟨0∣) 
+                × (padding 2 0 Utils.H)† 
+                   × (padding4 1 0 Utils.CNOT)†
+                      × (padding4 1 1 Utils.CNOT)†))).
+  apply fy_apply.
+  apply H.
+  admit.
+  unfold padding. simpl. 
+  (* rewrite H4. *)
 Abort.
 
 

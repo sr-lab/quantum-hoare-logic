@@ -10,6 +10,15 @@ From FY Require Export Logic.
 Definition X : string := "X".
 Definition Y : string := "Y".
 
+Example pad1:
+padding4 1 1 CNOT = I 2 ⊗ CNOT.
+Proof.
+  unfold padding4.
+  Check (padding4 2 0 CNOT).
+  simpl.
+  reflexivity.
+Qed.
+
 Example aexp1 :
     aeval (X !-> 5%nat; Y !-> 3%nat ; _ !-> 0%nat) <{ X + (3 % nat) - Y }> = 5%nat.
 Proof. reflexivity. Qed.
